@@ -6,14 +6,65 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  build:
+  analyze:
+    name: Analyze
     runs-on: macos-latest
     steps:
+<<<<<<< Updated upstream
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
+=======
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+>>>>>>> Stashed changes
         with:
           channel: stable
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
+          cache: true
+      - name: Pub get
+        run: flutter pub get
+      - name: Flutter analyze
+        run: flutter analyze
+
+  test:
+    name: Unit tests
+    runs-on: macos-latest
+    needs: analyze
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Pub get
+        run: flutter pub get
+      - name: Run tests
+        run: flutter test --reporter expanded
+
+  android-build:
+    name: Android build (debug)
+    runs-on: macos-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Pub get
+        run: flutter pub get
+      - name: Build debug APK
+        run: flutter build apk --debug
