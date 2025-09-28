@@ -18,15 +18,10 @@ jobs:
     name: Analyze
     runs-on: macos-latest
     steps:
-<<<<<<< Updated upstream
-      - uses: actions/checkout@v5
-      - uses: subosito/flutter-action@v2
-=======
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@5
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
->>>>>>> Stashed changes
         with:
           channel: stable
           cache: true
