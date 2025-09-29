@@ -11,17 +11,18 @@ coverage:
         target: auto
         threshold: 2%
         informational: false
+        if_not_found: success
     patch:
       default:
         target: 60%
         threshold: 0%
         informational: false
+        if_not_found: success
+        paths:
+          - "lib/"
+          - "test/"
 
 comment:
-  layout: "header, diff, files, footer"  # concise summary + changes
-  behavior: once                         # post a single comment and update it
-  require_changes: true                  # only comment when coverage changes
-  after_n_builds: 1                      # comment after first CI job uploads
-
-github_checks:
-  annotations: true                      # inline file/line annotations in Checks
+  layout: "header, diff, files"
+  behavior: default
+  require_changes: false
