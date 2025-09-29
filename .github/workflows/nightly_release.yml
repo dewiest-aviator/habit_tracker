@@ -3,6 +3,7 @@ name: Nightly Release
 on:
   schedule:
     - cron: '0 2 * * *'  # 02:00 UTC
+  workflow_dispatch: {}
 
 concurrency:
   group: nightly-${{ github.ref }}

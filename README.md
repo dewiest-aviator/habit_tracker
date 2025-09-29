@@ -3,7 +3,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-blue?logo=dart)](https://dart.dev)
 [![Build](https://github.com/dewiest-aviator/habit_tracker/actions/workflows/flutter_ci.yml/badge.svg)](https://github.com/dewiest-aviator/habit_tracker/actions)
-[![codecov](https://codecov.io/gh/dewiest-aviator/habit_tracker/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/dewiest-aviator/habit_tracker)
+[![codecov](https://codecov.io/gh/dewiest-aviator/habit_tracker/graph/badge.svg)](https://codecov.io/gh/dewiest-aviator/habit_tracker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A simple cross-platform **habit tracking app** built with Flutter.  
