@@ -12,8 +12,37 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      flutter: ${{ steps.filter.outputs.flutter }}
+      android: ${{ steps.filter.outputs.android }}
+      ios: ${{ steps.filter.outputs.ios }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            flutter:
+              - 'lib/**'
+              - 'test/**'
+              - 'pubspec.yaml'
+              - 'pubspec.lock'
+              - 'analysis_options.yaml'
+            android:
+              - 'android/**'
+            ios:
+              - 'ios/**'
+            workflow:
+              - '.github/workflows/pr_ci.yml'
+
   analyze-test:
     name: Analyze & Test
+    needs: changes
+    if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -34,8 +63,9 @@ jobs:
 
   android-debug:
     name: Android Debug Build
+    needs: [changes, analyze-test]
+    if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.android == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: macos-latest
-    needs: analyze-test
     steps:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
@@ -47,7 +77,7 @@ jobs:
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
       - name: Build debug APK with secrets version
         run: |
-            flutter build apk --debug \
+          flutter build apk --debug \
             --build-name "$APP_VERSION_NAME" \
             --build-number "$APP_BUILD_NUMBER"
       - name: Rename APK artifact
@@ -62,8 +92,9 @@ jobs:
 
   ios-debug:
     name: iOS Debug Build (Simulator)
+    needs: [changes, analyze-test]
+    if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.ios == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: macos-latest
-    needs: analyze-test
     steps:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
@@ -78,7 +109,6 @@ jobs:
           echo "IOS_APP_DISPLAY_NAME=${APP_VERSION_NAME}" >> $GITHUB_ENV
       - name: Build iOS simulator app (debug)
         run: flutter build ios --debug --no-codesign --simulator
-
       - name: Inject display name into Info.plist
         run: |
           APP_PATH="build/ios/iphonesimulator/Runner.app"
@@ -86,7 +116,6 @@ jobs:
           set -e
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $IOS_APP_DISPLAY_NAME" "$PLIST" || \
           /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string $IOS_APP_DISPLAY_NAME" "$PLIST"
-
       - name: Zip simulator app with version
         run: |
           APP_PATH="build/ios/iphonesimulator/Runner.app"
