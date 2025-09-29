@@ -39,6 +39,28 @@ jobs:
             workflow:
               - '.github/workflows/pr_ci.yml'
 
+  codecov-ping:
+    name: Codecov Ping (no coverage)
+    needs: changes
+    if: ${{ needs.changes.outputs.flutter != 'true' && needs.changes.outputs.workflow != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Ping Codecov to create status (no reports)
+        uses: codecov/codecov-action@v5
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+          files: ""
+          flags: noop
+          name: noop-ping
+          fail_ci_if_error: false
+          override_pr: ${{ github.event.pull_request.number }}
+          override_commit: ${{ github.sha }}
+          override_branch: ${{ github.head_ref }}
+          verbose: true
+
   analyze-test:
     name: Analyze & Test
     needs: changes

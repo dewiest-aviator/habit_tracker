@@ -102,7 +102,7 @@ jobs:
       - name: Prepare signing keystore
         run: |
           echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_B64 }}" | base64 --decode > android/app/release.keystore
-          echo "ANDROID_RELEASE_STORE_FILE=android/app/release.keystore" >> $GITHUB_ENV
+          echo "ANDROID_RELEASE_STORE_FILE=$GITHUB_WORKSPACE/android/app/release.keystore" >> $GITHUB_ENV
           echo "ANDROID_RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}" >> $GITHUB_ENV
           echo "ANDROID_RELEASE_KEY_ALIAS=${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}" >> $GITHUB_ENV
           echo "ANDROID_RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}" >> $GITHUB_ENV
@@ -112,6 +112,18 @@ jobs:
           flutter build appbundle --release \
             --build-name "$APP_VERSION_NAME" \
             --build-number "$APP_BUILD_NUMBER"
+
+      - name: Build Android APK (signed)
+        run: |
+          flutter build apk --release \
+            --build-name "$APP_VERSION_NAME" \
+            --build-number "$APP_BUILD_NUMBER"
+
+      - name: Rename APK artifact
+        run: |
+          SRC="build/app/outputs/flutter-apk/app-release.apk"
+          OUT="habittracker-android-release-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.apk"
+          cp "$SRC" "$OUT"
       - name: Rename AAB artifact
         run: |
           SRC=$(ls build/app/outputs/bundle/release/*.aab | head -n1)
@@ -121,3 +133,8 @@ jobs:
         with:
           name: android-release-aab-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
           path: habittracker-android-release-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.aab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-release-apk-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
+          path: habittracker-android-release-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.apk
