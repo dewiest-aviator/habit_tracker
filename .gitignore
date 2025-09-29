@@ -29,6 +29,7 @@
 .project
 .settings/
 .vscode/*
+!.vscode/settings.json
 .ccls-cache
 
 # This file, on the master branch, should never exist or be checked-in.
@@ -166,3 +167,8 @@ app.*.symbols
 
 # Ensure pubspec.lock is never ignored (explicit override)
 !pubspec.lock
+!**/pubspec.lock
+
+# FVM (Flutter Version Manager)
+.fvm/*
+!.fvm/fvm_config.json

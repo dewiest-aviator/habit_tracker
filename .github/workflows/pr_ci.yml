@@ -59,8 +59,21 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/github-script@v8
+        id: fvm
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.fvm/fvm_config.json';
+            const content = fs.readFileSync(path, 'utf8');
+            const json = JSON.parse(content);
+            const v = json.flutterSdkVersion || '';
+            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            core.setOutput('version', v);
       - uses: subosito/flutter-action@v2
-        with: { channel: stable, cache: true }
+        with:
+          flutter-version: ${{ steps.fvm.outputs.version }}
+          cache: true
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test --coverage --reporter expanded
@@ -81,8 +94,21 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/github-script@v8
+        id: fvm
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.fvm/fvm_config.json';
+            const content = fs.readFileSync(path, 'utf8');
+            const json = JSON.parse(content);
+            const v = json.flutterSdkVersion || '';
+            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            core.setOutput('version', v);
       - uses: subosito/flutter-action@v2
-        with: { channel: stable, cache: true }
+        with:
+          flutter-version: ${{ steps.fvm.outputs.version }}
+          cache: true
       - run: flutter pub get
       - name: Derive version/PR/build numbers
         run: |
@@ -110,8 +136,21 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/github-script@v8
+        id: fvm
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.fvm/fvm_config.json';
+            const content = fs.readFileSync(path, 'utf8');
+            const json = JSON.parse(content);
+            const v = json.flutterSdkVersion || '';
+            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            core.setOutput('version', v);
       - uses: subosito/flutter-action@v2
-        with: { channel: stable, cache: true }
+        with:
+          flutter-version: ${{ steps.fvm.outputs.version }}
+          cache: true
       - run: flutter pub get
       - name: Derive version/PR/build numbers (iOS)
         run: |
