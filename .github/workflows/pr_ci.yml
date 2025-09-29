@@ -39,6 +39,20 @@ jobs:
             workflow:
               - '.github/workflows/pr_ci.yml'
 
+  codecov-ping:
+    name: Codecov Ping (no coverage)
+    needs: changes
+    if: ${{ needs.changes.outputs.flutter != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Ping Codecov to create status
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: true
+
   analyze-test:
     name: Analyze & Test
     needs: changes
