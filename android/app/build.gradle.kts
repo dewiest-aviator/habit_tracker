@@ -68,20 +68,6 @@ android {
     }
 }
 
-    // Rename APK outputs using Android Gradle Plugin's Variant API
-    // Note: AAB filenames are not customizable here; we rename APKs only.
-androidComponents {
-    onVariants { variant ->
-        val buildTypeName = variant.buildType
-        val vName = variant.versionName ?: "0.0.0"
-        val vCode = variant.versionCode ?: 1
-        variant.outputs.forEach { output ->
-            // This sets the final APK file name for this variant output
-            output.outputFileName.set("habittracker-${buildTypeName}-v${vName}-build${vCode}.apk")
-        }
-    }
-}
-
 flutter {
     source = "../.."
 }
