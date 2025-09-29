@@ -1,0 +1,87 @@
+name: Nightly Release
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 02:00 UTC
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  skip-check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.compare.outputs.should_skip }}
+    steps:
+      - name: Get current SHA
+        id: current
+        uses: actions/github-script@v7
+        with:
+          script: core.setOutput('sha', context.sha)
+      - name: Last successful nightly
+        id: last
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: context.workflow,
+              event: 'schedule',
+              status: 'success',
+              per_page: 1
+            });
+            core.setOutput('sha', data.workflow_runs[0]?.head_sha || '')
+      - name: Compare
+        id: compare
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const cur = '${{ steps.current.outputs.sha }}'
+            const last = '${{ steps.last.outputs.sha }}'
+            core.setOutput('should_skip', (last && cur === last) ? 'true' : 'false')
+
+  analyze-test:
+    if: needs.skip-check.outputs.should_skip != 'true'
+    needs: skip-check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --coverage --reporter expanded
+      - uses: actions/upload-artifact@v4
+        with: { name: coverage-lcov-nightly, path: coverage/lcov.info }
+      - name: Upload coverage to Codecov (nightly)
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+          verbose: true
+
+  android-release:
+    if: needs.skip-check.outputs.should_skip != 'true'
+    needs: analyze-test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Prepare signing keystore
+        run: |
+          echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_B64 }}" | base64 --decode > android/app/release.keystore
+          echo "ANDROID_RELEASE_STORE_FILE=android/app/release.keystore" >> $GITHUB_ENV
+          echo "ANDROID_RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "ANDROID_RELEASE_KEY_ALIAS=${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "ANDROID_RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}" >> $GITHUB_ENV
+      - run: flutter pub get
+      - run: flutter build appbundle --release
+      - uses: actions/upload-artifact@v4
+        with: { name: android-release-aab, path: build/app/outputs/bundle/release/*.aab }
