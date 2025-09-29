@@ -41,9 +41,24 @@ jobs:
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
       - run: flutter pub get
-      - run: flutter build apk --debug
+      - name: Derive version/PR/build numbers
+        run: |
+          echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Build debug APK with secrets version
+        run: |
+            flutter build apk --debug \
+            --build-name "$APP_VERSION_NAME" \
+            --build-number "$APP_BUILD_NUMBER"
+      - name: Rename APK artifact
+        run: |
+          SRC="build/app/outputs/flutter-apk/app-debug.apk"
+          OUT="habittracker-android-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.apk"
+          cp "$SRC" "$OUT"
       - uses: actions/upload-artifact@v4
-        with: { name: android-debug-apk, path: build/app/outputs/flutter-apk/app-debug.apk }
+        with:
+          name: android-debug-apk-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
+          path: habittracker-android-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.apk
 
   ios-debug:
     name: iOS Debug Build (Simulator)
@@ -54,9 +69,30 @@ jobs:
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
       - run: flutter pub get
-      - run: flutter build ios --debug --no-codesign --simulator
-      - run: |
+      - name: Derive version/PR/build numbers (iOS)
+        run: |
+          echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Derive iOS display name
+        run: |
+          echo "IOS_APP_DISPLAY_NAME=${APP_VERSION_NAME}" >> $GITHUB_ENV
+      - name: Build iOS simulator app (debug)
+        run: flutter build ios --debug --no-codesign --simulator
+
+      - name: Inject display name into Info.plist
+        run: |
           APP_PATH="build/ios/iphonesimulator/Runner.app"
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" runner-sim-debug.zip
+          PLIST="$APP_PATH/Info.plist"
+          set -e
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $IOS_APP_DISPLAY_NAME" "$PLIST" || \
+          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string $IOS_APP_DISPLAY_NAME" "$PLIST"
+
+      - name: Zip simulator app with version
+        run: |
+          APP_PATH="build/ios/iphonesimulator/Runner.app"
+          OUT_NAME="habittracker-ios-sim-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT_NAME"
       - uses: actions/upload-artifact@v4
-        with: { name: ios-simulator-debug-app, path: runner-sim-debug.zip }
+        with:
+          name: ios-simulator-debug-app-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
+          path: habittracker-ios-sim-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.zip
