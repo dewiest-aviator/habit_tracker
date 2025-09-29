@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   analyze-test:
+    name: Analyze & Test
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
@@ -32,6 +33,7 @@ jobs:
           verbose: true
 
   android-debug:
+    name: Android Debug Build
     runs-on: macos-latest
     needs: analyze-test
     steps:
@@ -44,6 +46,7 @@ jobs:
         with: { name: android-debug-apk, path: build/app/outputs/flutter-apk/app-debug.apk }
 
   ios-debug:
+    name: iOS Debug Build (Simulator)
     runs-on: macos-latest
     needs: analyze-test
     steps:
