@@ -20,12 +20,12 @@ jobs:
     steps:
       - name: Get current SHA
         id: current
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: core.setOutput('sha', context.sha)
       - name: Last successful nightly
         id: last
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { data } = await github.rest.actions.listWorkflowRuns({
@@ -39,7 +39,7 @@ jobs:
             core.setOutput('sha', data.workflow_runs[0]?.head_sha || '')
       - name: Compare
         id: compare
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const isSchedule = context.eventName === 'schedule'
