@@ -1,0 +1,62 @@
+name: PR CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: pr-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-test:
+    name: Analyze & Test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --coverage --reporter expanded
+      - uses: actions/upload-artifact@v4
+        with: { name: coverage-lcov, path: coverage/lcov.info }
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+          verbose: true
+
+  android-debug:
+    name: Android Debug Build
+    runs-on: macos-latest
+    needs: analyze-test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with: { name: android-debug-apk, path: build/app/outputs/flutter-apk/app-debug.apk }
+
+  ios-debug:
+    name: iOS Debug Build (Simulator)
+    runs-on: macos-latest
+    needs: analyze-test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter build ios --debug --no-codesign --simulator
+      - run: |
+          APP_PATH="build/ios/iphonesimulator/Runner.app"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" runner-sim-debug.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: ios-simulator-debug-app, path: runner-sim-debug.zip }
