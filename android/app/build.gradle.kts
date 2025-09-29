@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.habit_tracker"
+    namespace = "com.raijinryu.habittracker"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,21 +20,50 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.habit_tracker"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.raijinryu.habittracker"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            fun gp(name: String): String? = project.findProperty(name) as String?
+
+            // Priority: CI secrets via env (ANDROID_RELEASE_*) -> user global gradle props (HABITTRACKER_RELEASE_*) -> fallback project props (ANDROID_RELEASE_*)
+            val storeFilePath = System.getenv("ANDROID_RELEASE_STORE_FILE")
+                ?: gp("HABITTRACKER_RELEASE_STORE_FILE")
+                ?: gp("ANDROID_RELEASE_STORE_FILE")
+                ?: ""
+
+            storeFile = if (storeFilePath.isNotBlank()) file(storeFilePath) else null
+            storePassword = System.getenv("ANDROID_RELEASE_STORE_PASSWORD")
+                ?: gp("HABITTRACKER_RELEASE_STORE_PASSWORD")
+                ?: gp("ANDROID_RELEASE_STORE_PASSWORD")
+            keyAlias = System.getenv("ANDROID_RELEASE_KEY_ALIAS")
+                ?: gp("HABITTRACKER_RELEASE_KEY_ALIAS")
+                ?: gp("ANDROID_RELEASE_KEY_ALIAS")
+            keyPassword = System.getenv("ANDROID_RELEASE_KEY_PASSWORD")
+                ?: gp("HABITTRACKER_RELEASE_KEY_PASSWORD")
+                ?: gp("ANDROID_RELEASE_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        getByName("debug")    { 
+            applicationIdSuffix = ".debug"
+            resValue("string", "app_name", "HabitTracker-debug-${defaultConfig.versionName}.${defaultConfig.versionCode}")
             signingConfig = signingConfigs.getByName("debug")
+        }
+        getByName("release")  { isMinifyEnabled = true;  // keep your proguard if any
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            resValue("string", "app_name", "HabitTracker-${defaultConfig.versionName}.${defaultConfig.versionCode}")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
