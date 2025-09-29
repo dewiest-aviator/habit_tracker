@@ -10,6 +10,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Habits')),
       body: Center(
         child: ElevatedButton.icon(
+          key: const Key('btn_settings'),
           onPressed: () => context.push('/settings'),
           icon: const Icon(Icons.settings),
           label: const Text('Settings'),
