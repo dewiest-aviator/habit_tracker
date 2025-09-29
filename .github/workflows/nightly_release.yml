@@ -20,12 +20,12 @@ jobs:
     steps:
       - name: Get current SHA
         id: current
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: core.setOutput('sha', context.sha)
       - name: Last successful nightly
         id: last
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Use the workflow file path (accepted by the API) instead of the display name
@@ -46,7 +46,7 @@ jobs:
             }
       - name: Compare
         id: compare
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const isSchedule = context.eventName === 'schedule'
