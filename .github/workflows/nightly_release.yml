@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   skip-check:
@@ -173,9 +173,11 @@ jobs:
 
       - name: Tag nightly release
         if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}"
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Nightly release $TAG"
-          git push origin "$TAG"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}" "$TAG"
