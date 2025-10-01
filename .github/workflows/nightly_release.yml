@@ -264,5 +264,4 @@ jobs:
           releaseFiles: ${{ env.AAB_OUT }}
           track: internal
           status: completed
-          changesNotSentForReview: true
           whatsNewDirectory: whatsnew
