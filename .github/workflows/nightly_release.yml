@@ -244,7 +244,7 @@ jobs:
         run: |
           URL="${{ steps.gh_release.outputs.url }}"
           mkdir -p whatsnew
-          echo "$URL" > whatsnew/en-US.txt
+          echo "$URL" > whatsnew/whatsnew-en-US.txt
 
       - name: Authenticate to Google Cloud (WIF)
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
@@ -265,3 +265,4 @@ jobs:
           track: internal
           status: completed
           whatsNewDirectory: whatsnew
+          releaseName: v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}
