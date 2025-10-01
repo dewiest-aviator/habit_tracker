@@ -166,35 +166,36 @@ jobs:
             --build-name "$APP_VERSION_NAME" \
             --build-number "$APP_BUILD_NUMBER"
 
-      - name: Rename APK artifact
+      - name: Prepare and rename release artifacts
         run: |
           BUILD_TYPE=${{ github.event_name == 'schedule' && 'nightly' || 'manual' }}
-          SRC="build/app/outputs/flutter-apk/app-release.apk"
-          OUT="habittracker-android-release-${BUILD_TYPE}-$(date +%Y%m%d)-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
-          cp "$SRC" "$OUT"
-      - name: Rename AAB artifact
-        run: |
-          BUILD_TYPE=${{ github.event_name == 'schedule' && 'nightly' || 'manual' }}
-          SRC=$(ls build/app/outputs/bundle/release/*.aab | head -n1)
-          OUT="habittracker-android-release-${BUILD_TYPE}-$(date +%Y%m%d)-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.aab"
-          cp "$SRC" "$OUT"
+          DATE=$(date +%Y%m%d)
+          echo "BUILD_TYPE=$BUILD_TYPE" >> $GITHUB_ENV
+          echo "DATE=$DATE" >> $GITHUB_ENV
+
+          APK_SRC="build/app/outputs/flutter-apk/app-release.apk"
+          AAB_SRC=$(ls build/app/outputs/bundle/release/*.aab | head -n1)
+
+          APK_OUT="habittracker-android-release-${BUILD_TYPE}-${DATE}-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
+          AAB_OUT="habittracker-android-release-${BUILD_TYPE}-${DATE}-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.aab"
+
+          cp "$APK_SRC" "$APK_OUT"
+          cp "$AAB_SRC" "$AAB_OUT"
+
+          echo "APK_OUT=$APK_OUT" >> $GITHUB_ENV
+          echo "AAB_OUT=$AAB_OUT" >> $GITHUB_ENV
+
       - name: Upload Android AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-release-aab-${{ github.event_name == 'schedule' && 'nightly' || 'manual' }}-$(date +%Y%m%d)-v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}
-          path: habittracker-android-release-${{ github.event_name == 'schedule' && 'nightly' || 'manual' }}-$(date +%Y%m%d)-v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}.aab
+          name: ${{ env.AAB_OUT }}
+          path: ${{ env.AAB_OUT }}
 
       - name: Upload Android APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-release-apk-nightly-$(date +%Y%m%d)-v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}
-          path: habittracker-android-release-${{ github.event_name == 'schedule' && 'nightly' || 'manual' }}-$(date +%Y%m%d)-v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}.apk
-
-      - name: Prepare release asset filenames
-        run: |
-          BUILD_TYPE=${{ github.event_name == 'schedule' && 'nightly' || 'manual' }}
-          echo "APK_OUT=habittracker-android-release-${BUILD_TYPE}-$(date +%Y%m%d)-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk" >> $GITHUB_ENV
-          echo "AAB_OUT=habittracker-android-release-${BUILD_TYPE}-$(date +%Y%m%d)-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.aab" >> $GITHUB_ENV
+          name: ${{ env.APK_OUT }}
+          path: ${{ env.APK_OUT }}
 
       - name: Create GitHub Release and upload assets
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
@@ -203,12 +204,19 @@ jobs:
           tag_name: v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}
           name: Nightly v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}
           draft: false
-          prerelease: true
+          prerelease: false
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
           files: |
             ${{ env.APK_OUT }}
             ${{ env.AAB_OUT }}
+
+      - name: Write Play What's New with GitHub Release link
+        if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
+        run: |
+          URL="https://github.com/${{ github.repository }}/releases/tag/v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}"
+          mkdir -p whatsnew
+          echo "See release notes here: $URL" > whatsnew/en-US.txt
 
       - name: Authenticate to Google Cloud (WIF)
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
@@ -226,3 +234,4 @@ jobs:
           releaseFiles: ${{ env.AAB_OUT }}
           track: alpha
           status: completed
+          whatsNewDirectory: whatsnew
