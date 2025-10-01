@@ -97,6 +97,15 @@ jobs:
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
+      - name: Cache Flutter build dirs (.dart_tool, build)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-build-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-build-
       - name: Get dependencies
         run: flutter pub get
       - name: Run analyzer
@@ -140,6 +149,24 @@ jobs:
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
+      - name: Cache Gradle (caches & wrapper)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Cache Flutter build dirs (.dart_tool, build)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-build-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-build-
       - name: Derive version/build numbers (nightly)
         shell: bash
         run: |
@@ -226,12 +253,13 @@ jobs:
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
           create_credentials_file: true
 
-      - name: Upload to Google Play (alpha)
+      - name: Upload to Google Play (internal)
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           packageName: com.raijinryu.habittracker
           releaseFiles: ${{ env.AAB_OUT }}
-          track: alpha
+          track: internal
           status: completed
+          changesNotSentForReview: true
           whatsNewDirectory: whatsnew
