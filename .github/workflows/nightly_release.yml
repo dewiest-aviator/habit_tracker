@@ -227,6 +227,7 @@ jobs:
       - name: Create GitHub Release and upload assets
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
         uses: softprops/action-gh-release@v2
+        id: gh_release
         with:
           tag_name: v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}
           name: Nightly v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}
@@ -241,13 +242,14 @@ jobs:
       - name: Write Play What's New with GitHub Release link
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
         run: |
-          URL="https://github.com/${{ github.repository }}/releases/tag/v${{ env.APP_VERSION_NAME }}.${{ env.APP_BUILD_NUMBER }}"
+          URL="${{ steps.gh_release.outputs.url }}"
           mkdir -p whatsnew
-          echo "See release notes here: $URL" > whatsnew/en-US.txt
+          echo "$URL" > whatsnew/en-US.txt
 
       - name: Authenticate to Google Cloud (WIF)
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
         uses: google-github-actions/auth@v2
+        id: auth
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
@@ -257,6 +259,7 @@ jobs:
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.raijinryu.habittracker
           releaseFiles: ${{ env.AAB_OUT }}
           track: internal
