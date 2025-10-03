@@ -21,8 +21,11 @@ jobs:
       ios: ${{ steps.filter.outputs.ios }}
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
-      - uses: dorny/paths-filter@v2
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Paths filter
         id: filter
+        uses: dorny/paths-filter@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           filters: |
@@ -45,7 +48,8 @@ jobs:
     if: ${{ needs.changes.outputs.flutter != 'true' && needs.changes.outputs.workflow != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
       - name: Codecov empty-upload (no reports needed)
         uses: codecov/codecov-action@v5
         with:
@@ -56,29 +60,56 @@ jobs:
     name: Analyze & Test
     needs: changes
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.workflow == 'true' }}
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/github-script@v8
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Read Flutter version (.fvmrc)
         id: fvm
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
-            const path = '.fvm/fvm_config.json';
+            const path = '.fvmrc';
             const content = fs.readFileSync(path, 'utf8');
-            const json = JSON.parse(content);
-            const v = json.flutterSdkVersion || '';
-            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
             core.setOutput('version', v);
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test --coverage --reporter expanded
-      - uses: actions/upload-artifact@v4
-        with: { name: coverage-lcov, path: coverage/lcov.info }
+
+      - name: Cache Flutter build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Flutter tests with coverage
+        run: flutter test --coverage --reporter expanded
+
+      - name: Upload lcov.info
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -91,40 +122,74 @@ jobs:
     name: Android Debug Build
     needs: [changes, analyze-test]
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.android == 'true' || needs.changes.outputs.workflow == 'true' }}
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/github-script@v8
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Read Flutter version (.fvmrc)
         id: fvm
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
-            const path = '.fvm/fvm_config.json';
+            const path = '.fvmrc';
             const content = fs.readFileSync(path, 'utf8');
-            const json = JSON.parse(content);
-            const v = json.flutterSdkVersion || '';
-            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
             core.setOutput('version', v);
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
-      - run: flutter pub get
+
+      - name: Cache Flutter build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Flutter pub get
+        run: flutter pub get
+
       - name: Derive version/PR/build numbers
         run: |
           echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
-      - name: Build debug APK with secrets version
+
+      - name: Build debug APK with version
         run: |
           flutter build apk --debug \
             --build-name "$APP_VERSION_NAME" \
             --build-number "$APP_BUILD_NUMBER"
+
       - name: Rename APK artifact
         run: |
           SRC="build/app/outputs/flutter-apk/app-debug.apk"
           OUT="habittracker-android-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.apk"
           cp "$SRC" "$OUT"
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
           path: habittracker-android-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.apk
@@ -135,32 +200,70 @@ jobs:
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.ios == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/github-script@v8
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Read Flutter version (.fvmrc)
         id: fvm
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
-            const path = '.fvm/fvm_config.json';
+            const path = '.fvmrc';
             const content = fs.readFileSync(path, 'utf8');
-            const json = JSON.parse(content);
-            const v = json.flutterSdkVersion || '';
-            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
             core.setOutput('version', v);
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
-      - run: flutter pub get
+
+      - name: Cache Flutter build artifacts (macOS)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cocoapods
+            ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
+
+      - name: Flutter pub get
+        run: flutter pub get
+
       - name: Derive version/PR/build numbers (iOS)
         run: |
           echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+
       - name: Derive iOS display name
         run: |
           echo "IOS_APP_DISPLAY_NAME=${APP_VERSION_NAME}" >> $GITHUB_ENV
+
       - name: Build iOS simulator app (debug)
         run: flutter build ios --debug --no-codesign --simulator
+
       - name: Inject display name into Info.plist
         run: |
           APP_PATH="build/ios/iphonesimulator/Runner.app"
@@ -168,12 +271,15 @@ jobs:
           set -e
           /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $IOS_APP_DISPLAY_NAME" "$PLIST" || \
           /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string $IOS_APP_DISPLAY_NAME" "$PLIST"
+
       - name: Zip simulator app with version
         run: |
           APP_PATH="build/ios/iphonesimulator/Runner.app"
           OUT_NAME="habittracker-ios-sim-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT_NAME"
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload iOS simulator app artifact
+        uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-debug-app-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
           path: habittracker-ios-sim-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.zip

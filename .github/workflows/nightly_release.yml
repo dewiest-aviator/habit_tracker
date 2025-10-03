@@ -83,15 +83,13 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const fs = require('fs')
-            const path = '.fvm/fvm_config.json'
-            if (!fs.existsSync(path)) {
-              core.setFailed(`Missing ${path}. Did you commit .fvm/fvm_config.json?`)
-            } else {
-              const v = JSON.parse(fs.readFileSync(path,'utf8')).flutterSdkVersion || ''
-              if (!v) core.setFailed('flutterSdkVersion missing in fvm_config.json')
-              core.setOutput('version', v)
-            }
+            const fs = require('fs');
+            const path = '.fvmrc';
+            const content = fs.readFileSync(path, 'utf8');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
+            core.setOutput('version', v);
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -103,8 +101,9 @@ jobs:
           path: |
             .dart_tool
             build
-          key: ${{ runner.os }}-flutter-build-${{ hashFiles('pubspec.lock') }}
+          key: ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: |
+            ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-
             ${{ runner.os }}-flutter-build-
       - name: Get dependencies
         run: flutter pub get
@@ -135,15 +134,13 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const fs = require('fs')
-            const path = '.fvm/fvm_config.json'
-            if (!fs.existsSync(path)) {
-              core.setFailed(`Missing ${path}. Did you commit .fvm/fvm_config.json?`)
-            } else {
-              const v = JSON.parse(fs.readFileSync(path,'utf8')).flutterSdkVersion || ''
-              if (!v) core.setFailed('flutterSdkVersion missing in fvm_config.json')
-              core.setOutput('version', v)
-            }
+            const fs = require('fs');
+            const path = '.fvmrc';
+            const content = fs.readFileSync(path, 'utf8');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
+            core.setOutput('version', v);
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -155,6 +152,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
+            android/.gradle
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
@@ -164,8 +162,9 @@ jobs:
           path: |
             .dart_tool
             build
-          key: ${{ runner.os }}-flutter-build-${{ hashFiles('pubspec.lock') }}
+          key: ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: |
+            ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-
             ${{ runner.os }}-flutter-build-
       - name: Derive version/build numbers (nightly)
         shell: bash
@@ -244,7 +243,7 @@ jobs:
         run: |
           URL="${{ steps.gh_release.outputs.url }}"
           mkdir -p whatsnew
-          echo "$URL" > whatsnew/whatsnew-en-US.txt
+          echo "$URL" > whatsnew/whatsnew-en-US
 
       - name: Authenticate to Google Cloud (WIF)
         if: github.event_name == 'schedule' || github.event.inputs.manual_release == 'true'
