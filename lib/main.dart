@@ -1,4 +1,6 @@
 import 'dart:isolate';
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -9,33 +11,57 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 
+// Gate Firebase/Crashlytics behind a compile-time flag.
+// Locally (default) this is false. In CI PR builds, pass:
+//   --dart-define=FIREBASE_ENABLED=true
+// In **release** builds, Firebase is always enabled regardless of the flag.
+const bool kFirebaseEnabled =
+    bool.fromEnvironment('FIREBASE_ENABLED', defaultValue: false);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (kFirebaseEnabled || kReleaseMode) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
 
-  if (kReleaseMode) {
-    // Forward Flutter framework errors to Crashlytics in release
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      // Enable Crashlytics collection for CI/test builds
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
 
-    // Catch uncaught async errors
-    Isolate.current.addErrorListener(
-      RawReceivePort((pair) async {
-        final List<dynamic> errorAndStacktrace = pair;
-        await FirebaseCrashlytics.instance.recordError(
-          errorAndStacktrace.first,
-          errorAndStacktrace.last as StackTrace,
-          fatal: true,
-        );
-      }).sendPort,
-    );
+      // Forward Flutter framework errors
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
 
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      // Uncaught errors from the engine / platform
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+
+      // Uncaught async errors
+      Isolate.current.addErrorListener(
+        RawReceivePort((pair) async {
+          final List<dynamic> errorAndStacktrace = pair;
+          await FirebaseCrashlytics.instance.recordError(
+            errorAndStacktrace.first,
+            errorAndStacktrace.last as StackTrace,
+            fatal: true,
+          );
+        }).sendPort,
+      );
+    } catch (e, st) {
+      // If configs are missing (e.g., local dev), fail gracefully
+      debugPrint('Firebase init skipped/failed: $e');
+      debugPrintStack(stackTrace: st);
+      FlutterError.onError = FlutterError.presentError;
+    }
   } else {
-    // Disabled by default in debug/profile
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+    // Local dev: no Firebase/Crashlytics
+    FlutterError.onError = FlutterError.presentError;
   }
 
   runApp(const HabitTrackerApp());

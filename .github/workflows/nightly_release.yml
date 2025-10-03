@@ -178,6 +178,10 @@ jobs:
           echo "ANDROID_RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}" >> $GITHUB_ENV
           echo "ANDROID_RELEASE_KEY_ALIAS=${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}" >> $GITHUB_ENV
           echo "ANDROID_RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}" >> $GITHUB_ENV
+      - name: Provision google-services.json 
+        run: |
+          echo "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON_B64 }}" | base64 --decode > android/app/google-services.json
+          test -s android/app/google-services.json && echo "google-services.json written" || (echo "google-services.json missing" && exit 1)
       - name: Get dependencies
         run: flutter pub get
       - name: Build Android App Bundle (signed)

@@ -127,6 +127,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Provision google-services.json (if present)
+        shell: bash
+        run: |
+          mkdir -p android/app
+          echo "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON_B64 }}" | base64 --decode > android/app/google-services.json
+          test -s android/app/google-services.json && echo "google-services.json written"
+
       - name: Read Flutter version (.fvmrc)
         id: fvm
         uses: actions/github-script@v8
@@ -180,19 +187,22 @@ jobs:
         run: |
           flutter build apk --debug \
             --build-name "$APP_VERSION_NAME" \
-            --build-number "$APP_BUILD_NUMBER"
+            --build-number "$APP_BUILD_NUMBER" \
+            --dart-define=FIREBASE_ENABLED=true
 
       - name: Rename APK artifact
         run: |
+
           SRC="build/app/outputs/flutter-apk/app-debug.apk"
-          OUT="habittracker-android-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.apk"
+          OUT="habittracker-android-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
           cp "$SRC" "$OUT"
+          echo "APK_OUT=$OUT" >> $GITHUB_ENV
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-debug-apk-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
-          path: habittracker-android-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.apk
+          name: ${{ env.APK_OUT }}
+          path: ${{ env.APK_OUT }}
 
   ios-debug:
     name: iOS Debug Build (Simulator)
@@ -202,6 +212,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Provision GoogleService-Info.plist (if present)
+        shell: bash
+        run: |
+          echo "${{ secrets.IOS_GOOGLESERVICE_INFO_PLIST_B64 }}" | base64 --decode > ios/Runner/GoogleService-Info.plist
+          test -s ios/Runner/GoogleService-Info.plist && plutil -lint ios/Runner/GoogleService-Info.plist && echo "GoogleService-Info.plist written"
+
+      - name: Provision firebase_app_id_file.json (if present)
+        shell: bash
+        run: |
+          echo "${{ secrets.IOS_FIREBASE_APP_ID_FILE_B64 }}" | base64 --decode > ios/firebase_app_id_file.json
+          test -s ios/firebase_app_id_file.json && echo "firebase_app_id_file.json written"
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
@@ -262,7 +284,7 @@ jobs:
           echo "IOS_APP_DISPLAY_NAME=${APP_VERSION_NAME}" >> $GITHUB_ENV
 
       - name: Build iOS simulator app (debug)
-        run: flutter build ios --debug --no-codesign --simulator
+        run: flutter build ios --debug --no-codesign --simulator --dart-define=FIREBASE_ENABLED=true
 
       - name: Inject display name into Info.plist
         run: |
@@ -275,11 +297,12 @@ jobs:
       - name: Zip simulator app with version
         run: |
           APP_PATH="build/ios/iphonesimulator/Runner.app"
-          OUT_NAME="habittracker-ios-sim-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.zip"
+          OUT_NAME="habittracker-ios-sim-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT_NAME"
+          echo "APP_OUT=$OUT_NAME" >> $GITHUB_ENV
 
       - name: Upload iOS simulator app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-simulator-debug-app-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
-          path: habittracker-ios-sim-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.zip
+          name: ${{ env.APP_OUT }}
+          path: ${{ env.APP_OUT }}
