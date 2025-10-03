@@ -297,6 +297,9 @@ jobs:
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
           create_credentials_file: true
 
+      - name: Setup gcloud CLI (for access token)
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Distribute to Firebase App Distribution (CLI)
         shell: bash
         env:
@@ -308,6 +311,27 @@ jobs:
           DATE: ${{ env.DATE }}
           FIREBASE_TESTERS_GROUP: ${{ vars.FIREBASE_TESTERS_GROUP || 'internal' }}
         run: |
+          # Install Firebase CLI
           npm install -g firebase-tools@13
-          RELEASE_NOTES="${FLAVOR_CAP} $([[ "${GITHUB_EVENT_NAME}" == "schedule" ]] && echo "Nightly" || echo "Manual") v${APP_VERSION_NAME}.${APP_BUILD_NUMBER} on ${DATE}"
-          firebase appdistribution:distribute "$APK_OUT" --app "$FIREBASE_APP_ID" --groups "${FIREBASE_TESTERS_GROUP}" --release-notes "$RELEASE_NOTES" 
+
+          # Obtain short-lived OAuth access token from WIF creds
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "Failed to obtain access token via gcloud" >&2
+            exit 1
+          fi
+
+          # Compose release notes
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            KIND="Nightly"
+          else
+            KIND="Manual"
+          fi
+          RELEASE_NOTES="${FLAVOR_CAP} ${KIND} v${APP_VERSION_NAME}.${APP_BUILD_NUMBER} on ${DATE}"
+
+          # Upload via Firebase CLI using OAuth token
+          firebase appdistribution:distribute "$APK_OUT" \
+            --app "$FIREBASE_APP_ID" \
+            --groups "${FIREBASE_TESTERS_GROUP}" \
+            --release-notes "$RELEASE_NOTES" \
+            --token "$ACCESS_TOKEN"
