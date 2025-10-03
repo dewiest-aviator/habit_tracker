@@ -23,6 +23,10 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.raijinryu.habittracker"
         minSdk = flutter.minSdkVersion
@@ -35,22 +39,22 @@ android {
         create("release") {
             fun gp(name: String): String? = project.findProperty(name) as String?
 
-            // Priority: CI secrets via env (ANDROID_RELEASE_*) -> user global gradle props (HABITTRACKER_RELEASE_*) -> fallback project props (ANDROID_RELEASE_*)
-            val storeFilePath = System.getenv("ANDROID_RELEASE_STORE_FILE")
-                ?: gp("HABITTRACKER_RELEASE_STORE_FILE")
-                ?: gp("ANDROID_RELEASE_STORE_FILE")
+            // Priority: CI secrets via env (ANDROID_*) -> user global gradle props (HABITTRACKER_*) -> fallback project props (ANDROID_*)
+            val storeFilePath = System.getenv("ANDROID_STORE_FILE")
+                ?: gp("HABITTRACKER_STORE_FILE")
+                ?: gp("ANDROID_STORE_FILE")
                 ?: ""
 
             storeFile = if (storeFilePath.isNotBlank()) file(storeFilePath) else null
-            storePassword = System.getenv("ANDROID_RELEASE_STORE_PASSWORD")
-                ?: gp("HABITTRACKER_RELEASE_STORE_PASSWORD")
-                ?: gp("ANDROID_RELEASE_STORE_PASSWORD")
-            keyAlias = System.getenv("ANDROID_RELEASE_KEY_ALIAS")
-                ?: gp("HABITTRACKER_RELEASE_KEY_ALIAS")
-                ?: gp("ANDROID_RELEASE_KEY_ALIAS")
-            keyPassword = System.getenv("ANDROID_RELEASE_KEY_PASSWORD")
-                ?: gp("HABITTRACKER_RELEASE_KEY_PASSWORD")
-                ?: gp("ANDROID_RELEASE_KEY_PASSWORD")
+            storePassword = System.getenv("ANDROID_STORE_PASSWORD")
+                ?: gp("HABITTRACKER_STORE_PASSWORD")
+                ?: gp("ANDROID_STORE_PASSWORD")
+            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                ?: gp("HABITTRACKER_KEY_ALIAS")
+                ?: gp("ANDROID_KEY_ALIAS")
+            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                ?: gp("HABITTRACKER_KEY_PASSWORD")
+                ?: gp("ANDROID_KEY_PASSWORD")
         }
     }
 
