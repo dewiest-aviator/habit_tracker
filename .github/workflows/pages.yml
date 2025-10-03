@@ -1,0 +1,40 @@
+name: Docs (GitHub Pages)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'                         # only when docs/ changes
+      - '.github/workflows/pages.yml'     # and when this workflow changes
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # If you need a build step (mkdocs, docusaurus, etc.), do it here.
+      # Example for plain static content in docs/ (no build):
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs  # or your generated site dir, e.g. 'build' or 'site'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
