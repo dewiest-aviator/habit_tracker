@@ -165,6 +165,11 @@ jobs:
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       - name: Cache Gradle (caches & wrapper)
         uses: actions/cache@v4
         with:
@@ -206,14 +211,14 @@ jobs:
         shell: bash
         env:
           ANDROID_GOOGLE_SERVICES_PATH: ${{ vars.ANDROID_GOOGLE_SERVICES_PATH }}
-          IOS_GOOGLE_SERVICE_INFO_PLIST_PATH: ${{ vars.IOS_GOOGLE_SERVICE_INFO_PLIST_PATH }}
           FLAVOR: ${{ vars.FLAVOR }}
         run: |
           # Ensure dirs exist
           mkdir -p "$(dirname "$ANDROID_GOOGLE_SERVICES_PATH")"
 
-          # Write files from env-scoped secrets
-          printf '%s' "$ANDROID_GOOGLE_SERVICES_JSON"  > "$ANDROID_GOOGLE_SERVICES_PATH"
+          # Write Android google-services.json from base64 secret and validate
+          echo "$ANDROID_GOOGLE_SERVICES_JSON" | base64 -d > "$ANDROID_GOOGLE_SERVICES_PATH"
+          jq -e . "$ANDROID_GOOGLE_SERVICES_PATH" >/dev/null || { echo "Invalid google-services.json"; cat "$ANDROID_GOOGLE_SERVICES_PATH"; exit 1; }
 
           # Export flavor for later steps (default to staging if not set)
           FLAVOR="${FLAVOR:-staging}"

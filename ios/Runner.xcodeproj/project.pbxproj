@@ -11,7 +11,6 @@
 		2615282B26CFABCAEE87B3CC /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1712ADF8A9410B0D2B6966EC /* Pods_Runner.framework */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
-		53E8543A1A8253A9CF6F8313 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4505D7F2E5379D6510E32CD7 /* GoogleService-Info.plist */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
@@ -52,7 +51,6 @@
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		38EFCD9E75ED5FF393D2DDBF /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
-		4505D7F2E5379D6510E32CD7 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
@@ -124,7 +122,6 @@
 				97C146F01CF9000F007C117D /* Runner */,
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
-				4505D7F2E5379D6510E32CD7 /* GoogleService-Info.plist */,
 				98AC0F23CEAC895C981F591C /* Pods */,
 				4E0DFB9ACC042A94739900E8 /* Frameworks */,
 			);
@@ -197,10 +194,10 @@
 				9740EEB61CF901F6004384FC /* Run Script */,
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
+				93C162402E903984000C661B /* Copy Resources per Flavor */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
-				93C162192E8FF8CB000C661B /* Copy Resources per Flavor */,
 				4164257A4452910EB9B6D531 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
@@ -267,7 +264,6 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
-				53E8543A1A8253A9CF6F8313 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,7 +329,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		93C162192E8FF8CB000C661B /* Copy Resources per Flavor */ = {
+		93C162402E903984000C661B /* Copy Resources per Flavor */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -349,7 +345,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nFLAVOR=\"prod\"\ncase \"${CONFIGURATION}\" in\n  *dev*) FLAVOR=\"dev\" ;;\n  *staging*) FLAVOR=\"staging\" ;;\n  *prod*) FLAVOR=\"prod\" ;;\nesac\n\n# Copy Firebase plist\nSRC_PLIST=\"${PROJECT_DIR}/Runner/Config/${FLAVOR}/GoogleService-Info.plist\"\nDEST_PLIST=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\nif [ ! -f \"$SRC_PLIST\" ]; then\n  echo \"Missing Firebase plist for flavor: $FLAVOR at $SRC_PLIST\"\n  exit 1\nfi\ncp \"$SRC_PLIST\" \"$DEST_PLIST\"\necho \"Copied $SRC_PLIST -> $DEST_PLIST\"\n\n# Copy InfoPlist.strings (Base localization)\nSRC_INFOSTR=\"${PROJECT_DIR}/Runner/Config/${FLAVOR}/Base.lproj/InfoPlist.strings\"\nDEST_INFODIR=\"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Base.lproj\"\nmkdir -p \"$DEST_INFODIR\"\ncp \"$SRC_INFOSTR\" \"$DEST_INFODIR/InfoPlist.strings\"\necho \"Copied $SRC_INFOSTR -> $DEST_INFODIR/InfoPlist.strings\"\n";
+			shellScript = "set -euo pipefail\n\n# Use FLAVOR from CI (flutter build ios --flavor \"$FLAVOR\"), default to dev for local\nFLAVOR_DIR=\"${FLAVOR:-dev}\"\n\n# 1) GoogleService-Info.plist\nPLIST_SRC=\"${SRCROOT}/Runner/Config/${FLAVOR_DIR}/GoogleService-Info.plist\"\nif [ ! -f \"$PLIST_SRC\" ]; then\n  echo \"error: Missing Firebase plist at $PLIST_SRC\"\n  exit 1\nfi\nPLIST_DST=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\ncp \"$PLIST_SRC\" \"$PLIST_DST\"\necho \"Copied Firebase plist → $PLIST_DST\"\n\n# 2) per-flavor InfoPlist.strings\nSTRINGS_SRC=\"${SRCROOT}/Runner/Config/${FLAVOR_DIR}/Base.lproj/InfoPlist.strings\"\nif [ -f \"$STRINGS_SRC\" ]; then\n  mkdir -p \"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Base.lproj\"\n  cp \"$STRINGS_SRC\" \"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Base.lproj/InfoPlist.strings\"\n  echo \"Copied InfoPlist.strings for ${FLAVOR_DIR}\"\nfiype a script or drag a script file from your workspace to insert its path.\n";
 		};
 		9740EEB61CF901F6004384FC /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
