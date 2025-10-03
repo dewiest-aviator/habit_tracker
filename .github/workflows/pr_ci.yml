@@ -309,24 +309,24 @@ jobs:
           echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
-      - name: Derive iOS display name
-        run: |
-          echo "IOS_APP_DISPLAY_NAME=${APP_VERSION_NAME}" >> $GITHUB_ENV
 
       - name: Build iOS simulator app (debug, flavor=dev)
         run: flutter build ios --debug --no-codesign --simulator --flavor "$FLAVOR" --dart-define=FIREBASE_ENABLED=true --dart-define=FLAVOR="$FLAVOR"
 
-      - name: Inject display name into Info.plist
+      - name: Locate built .app
+        shell: bash
         run: |
-          APP_PATH="build/ios/iphonesimulator/Runner.app"
-          PLIST="$APP_PATH/Info.plist"
-          set -e
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $IOS_APP_DISPLAY_NAME" "$PLIST" || \
-          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string $IOS_APP_DISPLAY_NAME" "$PLIST"
+          APP_PATH=$(ls -d build/ios/iphonesimulator/*.app | head -n1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found in build/ios/iphonesimulator" >&2
+            exit 1
+          fi
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          echo "Found app: $APP_PATH"
+
 
       - name: Zip simulator app with version
         run: |
-          APP_PATH="build/ios/iphonesimulator/Runner.app"
           OUT_NAME="habittracker-ios-sim-${FLAVOR}-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT_NAME"
           echo "APP_OUT=$OUT_NAME" >> $GITHUB_ENV

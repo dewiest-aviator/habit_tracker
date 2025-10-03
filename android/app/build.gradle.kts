@@ -74,13 +74,13 @@ android {
         create("dev") {
             dimension = "env"
             applicationIdSuffix = ".dev"
-            resValue("string", "app_name", "Habit Tracker DEV")
+            resValue("string", "app_name", "DEV • HT")
             buildConfigField("String", "FLAVOR", "\"dev\"")
         }
         create("staging") {
             dimension = "env"
             applicationIdSuffix = ".stg"
-            resValue("string", "app_name", "Habit Tracker STG")
+            resValue("string", "app_name", "STG • HT")
             buildConfigField("String", "FLAVOR", "\"staging\"")
         }
         create("prod") {
