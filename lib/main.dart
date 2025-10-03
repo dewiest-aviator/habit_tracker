@@ -3,12 +3,22 @@ import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'app_config.dart';
 import 'app_router.dart';
 import 'theme/app_theme.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'firebase_options.dart';
+
+import 'firebase_options_dev.dart' as dev;
+import 'firebase_options_staging.dart' as stg;
+import 'firebase_options_prod.dart' as prod;
+
+FirebaseOptions get firebaseOptions {
+  if (AppConfig.isProd) return prod.DefaultFirebaseOptions.currentPlatform;
+  if (AppConfig.isStaging) return stg.DefaultFirebaseOptions.currentPlatform;
+  return dev.DefaultFirebaseOptions.currentPlatform;
+}
 
 // Gate Firebase/Crashlytics behind a compile-time flag.
 // Locally (default) this is false. In CI PR builds, pass:
@@ -23,7 +33,7 @@ Future<void> main() async {
   if (kFirebaseEnabled || kReleaseMode) {
     try {
       await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
+        options: firebaseOptions,
       );
 
       // Enable Crashlytics collection for CI/test builds
@@ -73,7 +83,7 @@ class HabitTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Habit Tracker',
+      title: 'Habit Tracker${AppConfig.nameSuffix}',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: appRouter,

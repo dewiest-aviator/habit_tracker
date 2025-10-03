@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
     // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -54,19 +55,35 @@ android {
     }
 
     buildTypes {
-        getByName("debug")    { 
-            applicationIdSuffix = ".debug"
-            resValue("string", "app_name", "HabitTracker-debug-${defaultConfig.versionName}.${defaultConfig.versionCode}")
-            signingConfig = signingConfigs.getByName("debug")
-        }
         getByName("release")  { 
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            resValue("string", "app_name", "HabitTracker-${defaultConfig.versionName}.${defaultConfig.versionCode}")
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    flavorDimensions += listOf("env")
+
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "Habit Tracker DEV")
+            buildConfigField("String", "FLAVOR", "\"dev\"")
+        }
+        create("staging") {
+            dimension = "env"
+            applicationIdSuffix = ".stg"
+            resValue("string", "app_name", "Habit Tracker STG")
+            buildConfigField("String", "FLAVOR", "\"staging\"")
+        }
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "Habit Tracker")
+            buildConfigField("String", "FLAVOR", "\"prod\"")
         }
     }
 }

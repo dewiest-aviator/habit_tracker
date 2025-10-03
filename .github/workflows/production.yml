@@ -1,0 +1,175 @@
+name: Production Build
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Read Flutter version from FVM
+        id: fvm
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.fvmrc';
+            const content = fs.readFileSync(path, 'utf8');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
+            core.setOutput('version', v);
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm.outputs.version }}
+          cache: true
+      - name: Cache Flutter build dirs (.dart_tool, build)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-build-
+      - name: Get dependencies
+        run: flutter pub get
+      - name: Run analyzer
+        run: flutter analyze
+      - name: Run tests with coverage
+        run: flutter test --coverage --reporter expanded
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with: { name: coverage-lcov-nightly, path: coverage/lcov.info }
+      - name: Upload coverage to Codecov (nightly)
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+          verbose: true
+
+  android-release:
+    needs: analyze-test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Read Flutter version from FVM
+        id: fvm
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = '.fvmrc';
+            const content = fs.readFileSync(path, 'utf8');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
+            core.setOutput('version', v);
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fvm.outputs.version }}
+          cache: true
+      - name: Cache Gradle (caches & wrapper)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Cache Flutter build dirs (.dart_tool, build)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-build-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-build-
+
+      - name: Select flavor
+        shell: bash
+        run: |
+          FLAVOR="${{ vars.FLAVOR || 'prod' }}"
+          echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
+          echo "FLAVOR_CAP=${FLAVOR^}" >> $GITHUB_ENV
+
+      - name: Derive version/build numbers (nightly)
+        shell: bash
+        run: |
+          echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}" >> $GITHUB_ENV
+          echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Restore signing keystore (shared PKCS12)
+        shell: bash
+        run: |
+          mkdir -p $HOME/.android
+          echo "${{ secrets.ANDROID_KEYSTORE_B64 }}" | base64 --decode > "${{ secrets.ANDROID_STORE_FILE_PATH }}"
+          {
+            echo "ANDROID_STORE_FILE=${{ secrets.ANDROID_STORE_FILE_PATH }}"
+            echo "ANDROID_STORE_PASSWORD=${{ secrets.ANDROID_STORE_PASSWORD }}"
+            echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}"
+            echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}"
+          } >> $GITHUB_ENV
+      - name: Restore Firebase android config (google-services.json)
+        shell: bash
+        env:
+          ANDROID_GOOGLE_SERVICES_PATH: ${{ vars.ANDROID_GOOGLE_SERVICES_PATH }}
+        run: |
+          mkdir -p "$(dirname "$ANDROID_GOOGLE_SERVICES_PATH")"
+          printf '%s' "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}" > "$ANDROID_GOOGLE_SERVICES_PATH"
+          test -s "$ANDROID_GOOGLE_SERVICES_PATH" && echo "google-services.json written to $ANDROID_GOOGLE_SERVICES_PATH" || (echo "google-services.json missing" && exit 1)
+      - name: Get dependencies
+        run: flutter pub get
+      - name: Build Android App Bundle (signed)
+        run: |
+          flutter build appbundle --release \
+            --flavor "$FLAVOR" \
+            --build-name "$APP_VERSION_NAME" \
+            --build-number "$APP_BUILD_NUMBER"
+
+      - name: Prepare and rename release artifact (AAB only)
+        run: |
+          DATE=$(date +%Y%m%d)
+          echo "DATE=$DATE" >> $GITHUB_ENV
+
+          AAB_SRC=$(ls build/app/outputs/bundle/${FLAVOR}Release/*.aab | head -n1)
+          AAB_OUT="habittracker-android-${FLAVOR}-${DATE}-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.aab"
+
+          cp "$AAB_SRC" "$AAB_OUT"
+          echo "AAB_OUT=$AAB_OUT" >> $GITHUB_ENV
+
+      - name: Authenticate to Google Cloud for Play (WIF)
+        id: play_auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+
+      - name: Upload AAB to Google Play (production)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: ${{ steps.play_auth.outputs.credentials_file_path }}
+          packageName: ${{ vars.PLAY_PACKAGE_NAME }}
+          releaseFiles: ${{ env.AAB_OUT }}
+          track: ${{ vars.PLAY_TRACK || 'internal' }}
+          status: ${{ vars.PLAY_STATUS || 'draft' }}

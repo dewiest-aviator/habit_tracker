@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart'
 ///
 /// Example:
 /// ```dart
-/// import 'firebase_options.dart';
+/// import 'firebase_options_dev.dart';
 /// // ...
 /// await Firebase.initializeApp(
 ///   options: DefaultFirebaseOptions.currentPlatform,
@@ -50,20 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBAZv1TBJ6IcnBrp-cyYqXGYHsNT_dlN5A',
-    appId: '1:432496883145:android:02c3d93e99beeede2ea418',
-    messagingSenderId: '432496883145',
-    projectId: 'raijinryu-habit-tracker',
-    storageBucket: 'raijinryu-habit-tracker.firebasestorage.app',
+    apiKey: 'AIzaSyCe_1t2qFIMWe7grPpbnFwI0wxFsLtDvhs',
+    appId: '1:211918732213:android:66732191a43a60b7d5b7fc',
+    messagingSenderId: '211918732213',
+    projectId: 'raijinryu-ht-dev',
+    storageBucket: 'raijinryu-ht-dev.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCa--sEqbaPxNi-Qo-8ZUqU-Mxx0UxyYG0',
-    appId: '1:432496883145:ios:2af26447c19651522ea418',
-    messagingSenderId: '432496883145',
-    projectId: 'raijinryu-habit-tracker',
-    storageBucket: 'raijinryu-habit-tracker.firebasestorage.app',
-    iosBundleId: 'com.raijinryu.habittracker',
+    apiKey: 'AIzaSyC4I-zQrEOoILFxjThfBbXt7Egt918p0rM',
+    appId: '1:211918732213:ios:81d4f068c456f394d5b7fc',
+    messagingSenderId: '211918732213',
+    projectId: 'raijinryu-ht-dev',
+    storageBucket: 'raijinryu-ht-dev.firebasestorage.app',
+    iosBundleId: 'com.raijinryu.habittracker.dev',
   );
-
 }

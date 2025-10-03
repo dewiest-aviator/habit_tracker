@@ -84,6 +84,12 @@ jobs:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
 
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Cache Flutter build artifacts
         uses: actions/cache@v4
         with:
@@ -123,16 +129,10 @@ jobs:
     needs: [changes, analyze-test]
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.android == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
+    environment: dev
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
-      - name: Provision google-services.json (if present)
-        shell: bash
-        run: |
-          mkdir -p android/app
-          echo "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON_B64 }}" | base64 --decode > android/app/google-services.json
-          test -s android/app/google-services.json && echo "google-services.json written"
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
@@ -178,23 +178,40 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      - name: Select flavor (default dev)
+        shell: bash
+        run: |
+          FLAVOR="${{ vars.FLAVOR || 'dev' }}"
+          echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
+          echo "FLAVOR_CAP=${FLAVOR^}" >> $GITHUB_ENV
+
+      - name: Restore Firebase android config (google-services.json)
+        shell: bash
+        env:
+          ANDROID_GOOGLE_SERVICES_PATH: ${{ vars.ANDROID_GOOGLE_SERVICES_PATH }}
+        run: |
+          mkdir -p "$(dirname "$ANDROID_GOOGLE_SERVICES_PATH")"
+          printf '%s' "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}" > "$ANDROID_GOOGLE_SERVICES_PATH"
+          test -s "$ANDROID_GOOGLE_SERVICES_PATH" && echo "google-services.json written to $ANDROID_GOOGLE_SERVICES_PATH" || (echo "google-services.json missing" && exit 1)
+
       - name: Derive version/PR/build numbers
         run: |
           echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
-      - name: Build debug APK with version
+      - name: Build debug APK (flavor=dev) with version
         run: |
           flutter build apk --debug \
+            --flavor "$FLAVOR" \
             --build-name "$APP_VERSION_NAME" \
             --build-number "$APP_BUILD_NUMBER" \
-            --dart-define=FIREBASE_ENABLED=true
+            --dart-define=FIREBASE_ENABLED=true \
+            --dart-define=FLAVOR="$FLAVOR"
 
       - name: Rename APK artifact
         run: |
-
-          SRC="build/app/outputs/flutter-apk/app-debug.apk"
-          OUT="habittracker-android-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
+          SRC="build/app/outputs/flutter-apk/app-${FLAVOR}-debug.apk"
+          OUT="habittracker-android-${FLAVOR}-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
           cp "$SRC" "$OUT"
           echo "APK_OUT=$OUT" >> $GITHUB_ENV
 
@@ -209,21 +226,10 @@ jobs:
     needs: [changes, analyze-test]
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.ios == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: macos-latest
+    environment: dev
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
-      - name: Provision GoogleService-Info.plist (if present)
-        shell: bash
-        run: |
-          echo "${{ secrets.IOS_GOOGLESERVICE_INFO_PLIST_B64 }}" | base64 --decode > ios/Runner/GoogleService-Info.plist
-          test -s ios/Runner/GoogleService-Info.plist && plutil -lint ios/Runner/GoogleService-Info.plist && echo "GoogleService-Info.plist written"
-
-      - name: Provision firebase_app_id_file.json (if present)
-        shell: bash
-        run: |
-          echo "${{ secrets.IOS_FIREBASE_APP_ID_FILE_B64 }}" | base64 --decode > ios/firebase_app_id_file.json
-          test -s ios/firebase_app_id_file.json && echo "firebase_app_id_file.json written"
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
@@ -265,14 +271,30 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
 
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Select flavor (default dev)
+        shell: bash
+        run: |
+          FLAVOR="${{ vars.FLAVOR || 'dev' }}"
+          echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
+          echo "FLAVOR_CAP=${FLAVOR^}" >> $GITHUB_ENV
+
+      - name: Restore Firebase iOS config (GoogleService-Info.plist)
+        shell: bash
+        env:
+          IOS_GOOGLE_SERVICE_INFO_PLIST_PATH: ${{ vars.IOS_GOOGLE_SERVICE_INFO_PLIST_PATH }}
+        run: |
+          mkdir -p "$(dirname "$IOS_GOOGLE_SERVICE_INFO_PLIST_PATH")"
+          printf '%s' "${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST }}" > "$IOS_GOOGLE_SERVICE_INFO_PLIST_PATH"
+          test -s "$IOS_GOOGLE_SERVICE_INFO_PLIST_PATH" && echo "GoogleService-Info.plist written to $IOS_GOOGLE_SERVICE_INFO_PLIST_PATH" || (echo "GoogleService-Info.plist missing" && exit 1)
+
       - name: Install Pods
         run: |
           cd ios
           pod install --repo-update
           cd ..
-
-      - name: Flutter pub get
-        run: flutter pub get
 
       - name: Derive version/PR/build numbers (iOS)
         run: |
@@ -283,8 +305,8 @@ jobs:
         run: |
           echo "IOS_APP_DISPLAY_NAME=${APP_VERSION_NAME}" >> $GITHUB_ENV
 
-      - name: Build iOS simulator app (debug)
-        run: flutter build ios --debug --no-codesign --simulator --dart-define=FIREBASE_ENABLED=true
+      - name: Build iOS simulator app (debug, flavor=dev)
+        run: flutter build ios --debug --no-codesign --simulator --flavor "$FLAVOR" --dart-define=FIREBASE_ENABLED=true --dart-define=FLAVOR="$FLAVOR"
 
       - name: Inject display name into Info.plist
         run: |
@@ -297,7 +319,7 @@ jobs:
       - name: Zip simulator app with version
         run: |
           APP_PATH="build/ios/iphonesimulator/Runner.app"
-          OUT_NAME="habittracker-ios-sim-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.zip"
+          OUT_NAME="habittracker-ios-sim-${FLAVOR}-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT_NAME"
           echo "APP_OUT=$OUT_NAME" >> $GITHUB_ENV
 
