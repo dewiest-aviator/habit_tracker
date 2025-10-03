@@ -197,21 +197,32 @@ jobs:
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
       - name: Restore signing keystore (shared PKCS12)
         shell: bash
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_STORE_FILE_PATH: ${{ secrets.ANDROID_STORE_FILE_PATH }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          mkdir -p $HOME/.android
-          echo "$ANDROID_KEYSTORE_B64" | base64 --decode > "$ANDROID_STORE_FILE_PATH"
+          if [ -z "${ANDROID_STORE_FILE_PATH:-}" ]; then
+            echo "Keystore path secret ANDROID_STORE_FILE_PATH is empty" >&2
+            exit 1
+          fi
+          mkdir -p "$(dirname "$ANDROID_STORE_FILE_PATH")"
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$ANDROID_STORE_FILE_PATH"
           {
             echo "ANDROID_STORE_FILE=$ANDROID_STORE_FILE_PATH"
             echo "ANDROID_STORE_PASSWORD=$ANDROID_STORE_PASSWORD"
             echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS"
             echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
-          } >> $GITHUB_ENV
+          } >> "$GITHUB_ENV"
 
       - name: Restore Firebase configs (generic paths)
         shell: bash
         env:
           ANDROID_GOOGLE_SERVICES_PATH: ${{ vars.ANDROID_GOOGLE_SERVICES_PATH }}
           FLAVOR: ${{ vars.FLAVOR }}
+          ANDROID_GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
         run: |
           # Ensure dirs exist
           mkdir -p "$(dirname "$ANDROID_GOOGLE_SERVICES_PATH")"
