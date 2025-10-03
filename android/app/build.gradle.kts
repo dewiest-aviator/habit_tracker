@@ -1,5 +1,9 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -11,12 +15,15 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    buildFeatures {
+        buildConfig = true
     }
 
     defaultConfig {
@@ -31,39 +38,55 @@ android {
         create("release") {
             fun gp(name: String): String? = project.findProperty(name) as String?
 
-            // Priority: CI secrets via env (ANDROID_RELEASE_*) -> user global gradle props (HABITTRACKER_RELEASE_*) -> fallback project props (ANDROID_RELEASE_*)
-            val storeFilePath = System.getenv("ANDROID_RELEASE_STORE_FILE")
-                ?: gp("HABITTRACKER_RELEASE_STORE_FILE")
-                ?: gp("ANDROID_RELEASE_STORE_FILE")
+            // Priority: CI secrets via env (ANDROID_*) -> user global gradle props (HABITTRACKER_*) -> fallback project props (ANDROID_*)
+            val storeFilePath = System.getenv("ANDROID_STORE_FILE")
+                ?: gp("HABITTRACKER_STORE_FILE")
+                ?: gp("ANDROID_STORE_FILE")
                 ?: ""
 
             storeFile = if (storeFilePath.isNotBlank()) file(storeFilePath) else null
-            storePassword = System.getenv("ANDROID_RELEASE_STORE_PASSWORD")
-                ?: gp("HABITTRACKER_RELEASE_STORE_PASSWORD")
-                ?: gp("ANDROID_RELEASE_STORE_PASSWORD")
-            keyAlias = System.getenv("ANDROID_RELEASE_KEY_ALIAS")
-                ?: gp("HABITTRACKER_RELEASE_KEY_ALIAS")
-                ?: gp("ANDROID_RELEASE_KEY_ALIAS")
-            keyPassword = System.getenv("ANDROID_RELEASE_KEY_PASSWORD")
-                ?: gp("HABITTRACKER_RELEASE_KEY_PASSWORD")
-                ?: gp("ANDROID_RELEASE_KEY_PASSWORD")
+            storePassword = System.getenv("ANDROID_STORE_PASSWORD")
+                ?: gp("HABITTRACKER_STORE_PASSWORD")
+                ?: gp("ANDROID_STORE_PASSWORD")
+            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                ?: gp("HABITTRACKER_KEY_ALIAS")
+                ?: gp("ANDROID_KEY_ALIAS")
+            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                ?: gp("HABITTRACKER_KEY_PASSWORD")
+                ?: gp("ANDROID_KEY_PASSWORD")
         }
     }
 
     buildTypes {
-        getByName("debug")    { 
-            applicationIdSuffix = ".debug"
-            resValue("string", "app_name", "HabitTracker-debug-${defaultConfig.versionName}.${defaultConfig.versionCode}")
-            signingConfig = signingConfigs.getByName("debug")
-        }
         getByName("release")  { 
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            resValue("string", "app_name", "HabitTracker-${defaultConfig.versionName}.${defaultConfig.versionCode}")
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    flavorDimensions += listOf("env")
+
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "DEV • HT")
+            buildConfigField("String", "FLAVOR", "\"dev\"")
+        }
+        create("staging") {
+            dimension = "env"
+            applicationIdSuffix = ".stg"
+            resValue("string", "app_name", "STG • HT")
+            buildConfigField("String", "FLAVOR", "\"staging\"")
+        }
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "Habit Tracker")
+            buildConfigField("String", "FLAVOR", "\"prod\"")
         }
     }
 }

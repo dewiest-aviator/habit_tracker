@@ -21,8 +21,11 @@ jobs:
       ios: ${{ steps.filter.outputs.ios }}
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
-      - uses: dorny/paths-filter@v2
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Paths filter
         id: filter
+        uses: dorny/paths-filter@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           filters: |
@@ -45,7 +48,8 @@ jobs:
     if: ${{ needs.changes.outputs.flutter != 'true' && needs.changes.outputs.workflow != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
       - name: Codecov empty-upload (no reports needed)
         uses: codecov/codecov-action@v5
         with:
@@ -56,29 +60,62 @@ jobs:
     name: Analyze & Test
     needs: changes
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.workflow == 'true' }}
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/github-script@v8
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Read Flutter version (.fvmrc)
         id: fvm
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
-            const path = '.fvm/fvm_config.json';
+            const path = '.fvmrc';
             const content = fs.readFileSync(path, 'utf8');
-            const json = JSON.parse(content);
-            const v = json.flutterSdkVersion || '';
-            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
             core.setOutput('version', v);
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test --coverage --reporter expanded
-      - uses: actions/upload-artifact@v4
-        with: { name: coverage-lcov, path: coverage/lcov.info }
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Flutter build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Flutter tests with coverage
+        run: flutter test --coverage --reporter expanded
+
+      - name: Upload lcov.info
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -91,89 +128,211 @@ jobs:
     name: Android Debug Build
     needs: [changes, analyze-test]
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.android == 'true' || needs.changes.outputs.workflow == 'true' }}
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+    environment: dev
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/github-script@v8
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Read Flutter version (.fvmrc)
         id: fvm
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
-            const path = '.fvm/fvm_config.json';
+            const path = '.fvmrc';
             const content = fs.readFileSync(path, 'utf8');
-            const json = JSON.parse(content);
-            const v = json.flutterSdkVersion || '';
-            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
             core.setOutput('version', v);
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
-      - run: flutter pub get
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Flutter build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            android/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Select flavor (default dev)
+        shell: bash
+        run: |
+          FLAVOR="${{ vars.FLAVOR || 'dev' }}"
+          echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
+          FLAVOR_CAP=$(printf '%s' "$FLAVOR" | awk '{printf toupper(substr($0,1,1)) substr($0,2)}')
+          echo "FLAVOR_CAP=$FLAVOR_CAP" >> $GITHUB_ENV
+
+      - name: Restore Firebase android config (google-services.json)
+        shell: bash
+        env:
+          ANDROID_GOOGLE_SERVICES_PATH: ${{ vars.ANDROID_GOOGLE_SERVICES_PATH }}
+        run: |
+          mkdir -p "$(dirname "$ANDROID_GOOGLE_SERVICES_PATH")"
+          echo "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}" | base64 -d > "$ANDROID_GOOGLE_SERVICES_PATH"
+          jq -e . "$ANDROID_GOOGLE_SERVICES_PATH" >/dev/null || { echo "Invalid google-services.json"; cat "$ANDROID_GOOGLE_SERVICES_PATH"; exit 1; }
+
       - name: Derive version/PR/build numbers
         run: |
           echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
-      - name: Build debug APK with secrets version
+
+      - name: Build debug APK (flavor=dev) with version
         run: |
           flutter build apk --debug \
+            --flavor "$FLAVOR" \
             --build-name "$APP_VERSION_NAME" \
-            --build-number "$APP_BUILD_NUMBER"
+            --build-number "$APP_BUILD_NUMBER" \
+            --dart-define=FIREBASE_ENABLED=true \
+            --dart-define=FLAVOR="$FLAVOR"
+
       - name: Rename APK artifact
         run: |
-          SRC="build/app/outputs/flutter-apk/app-debug.apk"
-          OUT="habittracker-android-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.apk"
+          SRC="build/app/outputs/flutter-apk/app-${FLAVOR}-debug.apk"
+          OUT="habittracker-android-${FLAVOR}-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
           cp "$SRC" "$OUT"
-      - uses: actions/upload-artifact@v4
+          echo "APK_OUT=$OUT" >> $GITHUB_ENV
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: android-debug-apk-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
-          path: habittracker-android-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.apk
+          name: ${{ env.APK_OUT }}
+          path: ${{ env.APK_OUT }}
 
   ios-debug:
     name: iOS Debug Build (Simulator)
     needs: [changes, analyze-test]
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.ios == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: macos-latest
+    environment: dev
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/github-script@v8
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Read Flutter version (.fvmrc)
         id: fvm
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
-            const path = '.fvm/fvm_config.json';
+            const path = '.fvmrc';
             const content = fs.readFileSync(path, 'utf8');
-            const json = JSON.parse(content);
-            const v = json.flutterSdkVersion || '';
-            if (!v) core.setFailed('flutterSdkVersion missing in .fvm/fvm_config.json');
+            let v = '';
+            try { const json = JSON.parse(content); v = json.flutter || json.flutterSdkVersion || ''; } catch (e) {}
+            if (!v) core.setFailed('Flutter version missing in .fvmrc (expected { "flutter": "x.y.z" })');
             core.setOutput('version', v);
-      - uses: subosito/flutter-action@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
-      - run: flutter pub get
+
+      - name: Cache Flutter build artifacts (macOS)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .dart_tool
+            build
+          key: ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-flutter-
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cocoapods
+            ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Select flavor (default dev)
+        shell: bash
+        run: |
+          FLAVOR="${{ vars.FLAVOR || 'dev' }}"
+          echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
+          FLAVOR_CAP=$(printf '%s' "$FLAVOR" | awk '{printf toupper(substr($0,1,1)) substr($0,2)}')
+          echo "FLAVOR_CAP=$FLAVOR_CAP" >> $GITHUB_ENV
+
+      - name: Restore Firebase iOS config (GoogleService-Info.plist)
+        shell: bash
+        env:
+          IOS_GOOGLE_SERVICE_INFO_PLIST_PATH: ${{ vars.IOS_GOOGLE_SERVICE_INFO_PLIST_PATH }}
+        run: |
+          mkdir -p "$(dirname "$IOS_GOOGLE_SERVICE_INFO_PLIST_PATH")"
+          echo "${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST }}" | base64 -d > "$IOS_GOOGLE_SERVICE_INFO_PLIST_PATH"
+          test -s "$IOS_GOOGLE_SERVICE_INFO_PLIST_PATH" && echo "GoogleService-Info.plist written to $IOS_GOOGLE_SERVICE_INFO_PLIST_PATH" || (echo "GoogleService-Info.plist missing" && exit 1)
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
+
       - name: Derive version/PR/build numbers (iOS)
         run: |
           echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
-      - name: Derive iOS display name
+
+
+      - name: Build iOS simulator app (debug, flavor=dev)
+        run: flutter build ios --debug --no-codesign --simulator --flavor "$FLAVOR" --dart-define=FIREBASE_ENABLED=true --dart-define=FLAVOR="$FLAVOR"
+
+      - name: Locate built .app
+        shell: bash
         run: |
-          echo "IOS_APP_DISPLAY_NAME=${APP_VERSION_NAME}" >> $GITHUB_ENV
-      - name: Build iOS simulator app (debug)
-        run: flutter build ios --debug --no-codesign --simulator
-      - name: Inject display name into Info.plist
-        run: |
-          APP_PATH="build/ios/iphonesimulator/Runner.app"
-          PLIST="$APP_PATH/Info.plist"
-          set -e
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $IOS_APP_DISPLAY_NAME" "$PLIST" || \
-          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string $IOS_APP_DISPLAY_NAME" "$PLIST"
+          APP_PATH=$(ls -d build/ios/iphonesimulator/*.app | head -n1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found in build/ios/iphonesimulator" >&2
+            exit 1
+          fi
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+          echo "Found app: $APP_PATH"
+
+
       - name: Zip simulator app with version
         run: |
-          APP_PATH="build/ios/iphonesimulator/Runner.app"
-          OUT_NAME="habittracker-ios-sim-debug-v${APP_VERSION_NAME}-build${APP_BUILD_NUMBER}.zip"
+          OUT_NAME="habittracker-ios-sim-${FLAVOR}-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT_NAME"
-      - uses: actions/upload-artifact@v4
+          echo "APP_OUT=$OUT_NAME" >> $GITHUB_ENV
+
+      - name: Upload iOS simulator app artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: ios-simulator-debug-app-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}
-          path: habittracker-ios-sim-debug-v${{ env.APP_VERSION_NAME }}-build${{ env.APP_BUILD_NUMBER }}.zip
+          name: ${{ env.APP_OUT }}
+          path: ${{ env.APP_OUT }}
