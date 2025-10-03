@@ -218,7 +218,8 @@ jobs:
           # Export flavor for later steps (default to staging if not set)
           FLAVOR="${FLAVOR:-staging}"
           echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
-          echo "FLAVOR_CAP=${FLAVOR^}" >> $GITHUB_ENV
+          FLAVOR_CAP=$(printf '%s' "$FLAVOR" | awk '{printf toupper(substr($0,1,1)) substr($0,2)}')
+          echo "FLAVOR_CAP=$FLAVOR_CAP" >> $GITHUB_ENV
 
       - name: Build Android APK (${{ env.FLAVOR }} release)
         run: |

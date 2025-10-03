@@ -183,7 +183,8 @@ jobs:
         run: |
           FLAVOR="${{ vars.FLAVOR || 'dev' }}"
           echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
-          echo "FLAVOR_CAP=${FLAVOR^}" >> $GITHUB_ENV
+          FLAVOR_CAP=$(printf '%s' "$FLAVOR" | awk '{printf toupper(substr($0,1,1)) substr($0,2)}')
+          echo "FLAVOR_CAP=$FLAVOR_CAP" >> $GITHUB_ENV
 
       - name: Restore Firebase android config (google-services.json)
         shell: bash
@@ -279,7 +280,8 @@ jobs:
         run: |
           FLAVOR="${{ vars.FLAVOR || 'dev' }}"
           echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
-          echo "FLAVOR_CAP=${FLAVOR^}" >> $GITHUB_ENV
+          FLAVOR_CAP=$(printf '%s' "$FLAVOR" | awk '{printf toupper(substr($0,1,1)) substr($0,2)}')
+          echo "FLAVOR_CAP=$FLAVOR_CAP" >> $GITHUB_ENV
 
       - name: Restore Firebase iOS config (GoogleService-Info.plist)
         shell: bash

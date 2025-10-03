@@ -111,7 +111,8 @@ jobs:
         run: |
           FLAVOR="${{ vars.FLAVOR || 'prod' }}"
           echo "FLAVOR=$FLAVOR" >> $GITHUB_ENV
-          echo "FLAVOR_CAP=${FLAVOR^}" >> $GITHUB_ENV
+          FLAVOR_CAP=$(printf '%s' "$FLAVOR" | awk '{printf toupper(substr($0,1,1)) substr($0,2)}')
+          echo "FLAVOR_CAP=$FLAVOR_CAP" >> $GITHUB_ENV
 
       - name: Derive version/build numbers (nightly)
         shell: bash
