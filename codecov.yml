@@ -5,6 +5,9 @@ coverage:
   precision: 2
   round: down
 
+  ignore:
+    - "docs/**"
+
   status:
     project:
       default:
