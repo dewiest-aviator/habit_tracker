@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:go_router/go_router.dart';
@@ -83,9 +82,12 @@ Future<void> main() async {
     FlutterError.onError = FlutterError.presentError;
   }
 
-  final router = createAppRouter(
-    observers: [if (analyticsObserver != null) analyticsObserver!],
-  );
+  final observers = <NavigatorObserver>[];
+  if (analyticsObserver != null) {
+    observers.add(analyticsObserver);
+  }
+
+  final router = createAppRouter(observers: observers);
 
   runApp(HabitTrackerApp(router: router));
 }
