@@ -13,9 +13,9 @@ dependencies:
     sdk: flutter
   go_router: ^16.2.4
   cupertino_icons: ^1.0.8
-  firebase_core: ^3.8.0
-  firebase_analytics: ^11.3.0
-  firebase_crashlytics: ^4.1.0
+  firebase_core: ^4.1.1
+  firebase_analytics: ^12.0.2
+  firebase_crashlytics: ^5.0.2
   shared_preferences: ^2.3.2
   
 dev_dependencies:
@@ -23,7 +23,24 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   mocktail: ^1.0.3
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.1
 
 # Flutter configuration
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path_android: assets/branding/app_icon_android.png
+  adaptive_icon_foreground: assets/branding/app_icon_adaptive.png
+  adaptive_icon_background: "#FFFFFFFF"
+  image_path_ios: assets/branding/app_icon_ios.png
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#041529"
+  image: assets/branding/app_icon.png
+  image_dark: assets/branding/app_icon.png

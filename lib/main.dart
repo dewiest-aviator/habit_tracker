@@ -35,6 +35,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final enableFirebase = kFirebaseEnabled || kReleaseMode;
+  final rootNavigatorKey = GlobalKey<NavigatorState>();
   if (enableFirebase) {
     try {
       await Firebase.initializeApp(options: firebaseOptions);
@@ -83,10 +84,17 @@ Future<void> main() async {
     observers.add(observer);
   }
 
-  final router = createAppRouter(observers: observers);
+  final router = createAppRouter(
+    observers: observers,
+    navigatorKey: rootNavigatorKey,
+  );
 
   runApp(
-    HabitTrackerApp(router: router, telemetryController: telemetryController),
+    HabitTrackerApp(
+      router: router,
+      telemetryController: telemetryController,
+      rootNavigatorKey: rootNavigatorKey,
+    ),
   );
 }
 
@@ -95,10 +103,12 @@ class HabitTrackerApp extends StatelessWidget {
     super.key,
     required this.router,
     required this.telemetryController,
+    required this.rootNavigatorKey,
   });
 
   final GoRouter router;
   final TelemetryController telemetryController;
+  final GlobalKey<NavigatorState> rootNavigatorKey;
 
   @override
   Widget build(BuildContext context) {
@@ -110,16 +120,23 @@ class HabitTrackerApp extends StatelessWidget {
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         routerConfig: router,
-        builder: (context, child) => _ConsentPromptOverlay(child: child),
+        builder: (context, child) => _ConsentPromptOverlay(
+          navigatorKey: rootNavigatorKey,
+          child: child,
+        ),
       ),
     );
   }
 }
 
 class _ConsentPromptOverlay extends StatefulWidget {
-  const _ConsentPromptOverlay({required this.child});
+  const _ConsentPromptOverlay({
+    required this.child,
+    required this.navigatorKey,
+  });
 
   final Widget? child;
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
   State<_ConsentPromptOverlay> createState() => _ConsentPromptOverlayState();
@@ -157,11 +174,14 @@ class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
     if (!controller.isLoaded) return;
     if (controller.hasRecordedDecision) return;
 
+    final navigatorContext = widget.navigatorKey.currentContext;
+    if (navigatorContext == null) return;
+
     _dialogShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       showDialog<void>(
-        context: context,
+        context: navigatorContext,
         barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
@@ -174,8 +194,8 @@ class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
               TextButton(
                 onPressed: () async {
                   await TelemetryProvider.of(context).updateConsent(false);
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
+                  if (navigatorContext.mounted) {
+                    Navigator.of(navigatorContext).pop();
                   }
                 },
                 child: const Text('Not now'),
@@ -183,8 +203,8 @@ class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
               FilledButton(
                 onPressed: () async {
                   await TelemetryProvider.of(context).updateConsent(true);
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
+                  if (navigatorContext.mounted) {
+                    Navigator.of(navigatorContext).pop();
                   }
                 },
                 child: const Text('Share'),

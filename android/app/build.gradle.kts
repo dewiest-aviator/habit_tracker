@@ -28,7 +28,7 @@ android {
 
     defaultConfig {
         applicationId = "com.raijinryu.habittracker"
-        minSdk = flutter.minSdkVersion
+        minSdk = 31
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

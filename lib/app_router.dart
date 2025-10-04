@@ -4,8 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 
-GoRouter createAppRouter({List<NavigatorObserver> observers = const []}) {
+GoRouter createAppRouter({
+  List<NavigatorObserver> observers = const [],
+  GlobalKey<NavigatorState>? navigatorKey,
+}) {
   return GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: '/',
     observers: observers,
     routes: [
