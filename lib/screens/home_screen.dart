@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
+import '../services/analytics_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,13 +15,18 @@ class HomeScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton.icon(
           key: const Key('btn_settings'),
-          onPressed: () => context.push('/settings'),
+          onPressed: () {
+            unawaited(AnalyticsService.logEvent('open_settings_tap'));
+            context.push('/settings');
+          },
           icon: const Icon(Icons.settings),
           label: const Text('Settings'),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          unawaited(AnalyticsService.logEvent('add_habit_tap'));
+        },
         tooltip: 'Add habit',
         child: const Icon(Icons.add),
       ),
