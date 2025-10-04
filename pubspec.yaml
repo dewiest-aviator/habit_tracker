@@ -29,3 +29,14 @@ dev_dependencies:
 # Flutter configuration
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  ios: true
+  image_path_ios: assets/branding/app_icon_ios.png
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#041529"
+  image: assets/branding/app_icon.png
+  image_dark: assets/branding/app_icon.png
