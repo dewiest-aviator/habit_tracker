@@ -1,4 +1,4 @@
-package com.raijinryu.habit_tracker
+package com.raijinryu.habittracker
 
 import io.flutter.embedding.android.FlutterActivity
 
