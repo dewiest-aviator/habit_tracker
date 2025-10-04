@@ -54,6 +54,32 @@ void main() {
     ).called(1);
   });
 
+  test('logEvent strips null parameters before forwarding', () async {
+    final analytics = _MockFirebaseAnalytics();
+
+    when(
+      () => analytics.setAnalyticsCollectionEnabled(true),
+    ).thenAnswer((_) async {});
+    when(
+      () => analytics.logEvent(
+        name: any(named: 'name'),
+        parameters: any(named: 'parameters'),
+      ),
+    ).thenAnswer((_) async {});
+
+    await AnalyticsService.configure(analytics);
+
+    await AnalyticsService.logEvent(
+      'test_event',
+      parameters: {'keep': 'value', 'drop': null},
+    );
+
+    verify(
+      () =>
+          analytics.logEvent(name: 'test_event', parameters: {'keep': 'value'}),
+    ).called(1);
+  });
+
   test('log calls are safe when analytics is disabled', () async {
     expect(AnalyticsService.enabled, isFalse);
     expect(AnalyticsService.observer, isNull);
