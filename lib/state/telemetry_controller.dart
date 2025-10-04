@@ -11,12 +11,16 @@ class TelemetryController extends ChangeNotifier {
     required this.enableFirebase,
     FirebaseAnalytics? analytics,
     FirebaseCrashlytics? crashlytics,
-  }) : _analytics = analytics ?? FirebaseAnalytics.instance,
-       _crashlytics = crashlytics ?? FirebaseCrashlytics.instance;
+  })  : _analytics = enableFirebase
+            ? analytics ?? FirebaseAnalytics.instance
+            : null,
+        _crashlytics = enableFirebase
+            ? crashlytics ?? FirebaseCrashlytics.instance
+            : null;
 
   final bool enableFirebase;
-  final FirebaseAnalytics _analytics;
-  final FirebaseCrashlytics _crashlytics;
+  final FirebaseAnalytics? _analytics;
+  final FirebaseCrashlytics? _crashlytics;
 
   bool _loaded = false;
   bool _consent = false;
@@ -54,12 +58,18 @@ class TelemetryController extends ChangeNotifier {
   }
 
   Future<void> _applyTelemetryState(bool granted) async {
-    await _crashlytics.setCrashlyticsCollectionEnabled(granted);
-    await _analytics.setAnalyticsCollectionEnabled(granted);
+    final crashlytics = _crashlytics;
+    if (crashlytics != null) {
+      await crashlytics.setCrashlyticsCollectionEnabled(granted);
+    }
+    final analytics = _analytics;
+    if (analytics != null) {
+      await analytics.setAnalyticsCollectionEnabled(granted);
+    }
 
     if (granted) {
-      if (!AnalyticsService.enabled) {
-        await AnalyticsService.configure(_analytics);
+      if (!AnalyticsService.enabled && analytics != null) {
+        await AnalyticsService.configure(analytics);
       }
       await AnalyticsService.logAppOpen();
     }
