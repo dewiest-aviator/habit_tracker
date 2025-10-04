@@ -5,12 +5,14 @@ import 'package:habit_tracker/theme/app_theme.dart';
 
 void main() {
   testWidgets('navigates from Home to Settings', (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      routerConfig: appRouter,
-    ));
+    await tester.pumpWidget(
+      MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        routerConfig: createAppRouter(),
+      ),
+    );
 
     await tester.pumpAndSettle();
     expect(find.text('Habits'), findsOneWidget);
