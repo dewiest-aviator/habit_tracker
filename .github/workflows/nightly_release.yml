@@ -307,7 +307,24 @@ jobs:
           APP_BUILD_NUMBER: ${{ env.APP_BUILD_NUMBER }}
           DATE: ${{ env.DATE }}
           FIREBASE_TESTERS_GROUP: ${{ vars.FIREBASE_TESTERS_GROUP || 'internal' }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.fb_auth.outputs.credentials_file_path }}
         run: |
+          # Install Firebase CLI
           npm install -g firebase-tools@13
-          RELEASE_NOTES="${FLAVOR_CAP} $([[ "${GITHUB_EVENT_NAME}" == "schedule" ]] && echo "Nightly" || echo "Manual") v${APP_VERSION_NAME}.${APP_BUILD_NUMBER} on ${DATE}"
-          firebase appdistribution:distribute "$APK_OUT" --app "$FIREBASE_APP_ID" --groups "${FIREBASE_TESTERS_GROUP}" --release-notes "$RELEASE_NOTES" 
+
+          # Verify we are authenticated via WIF service account
+          gcloud auth list
+
+          # Compose release notes
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            KIND="Nightly"
+          else
+            KIND="Manual"
+          fi
+          RELEASE_NOTES="${FLAVOR_CAP} ${KIND} v${APP_VERSION_NAME}.${APP_BUILD_NUMBER} on ${DATE}"
+
+          # Use WIF credentials (Firebase CLI auto-detects GOOGLE_APPLICATION_CREDENTIALS)
+          firebase appdistribution:distribute "$APK_OUT" \
+            --app "$FIREBASE_APP_ID" \
+            --groups "${FIREBASE_TESTERS_GROUP}" \
+            --release-notes "$RELEASE_NOTES"
