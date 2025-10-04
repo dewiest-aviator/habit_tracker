@@ -23,5 +23,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Settings'), findsOneWidget);
+
+    final backButton = find.byTooltip('Back');
+    await tester.tap(backButton);
+    await tester.pumpAndSettle();
+
+    final fab = find.byType(FloatingActionButton);
+    expect(fab, findsOneWidget);
+    await tester.tap(fab);
+    await tester.pump();
+  });
+
+  testWidgets('shows not found page for unknown routes', (
+    WidgetTester tester,
+  ) async {
+    final router = createAppRouter();
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        routerConfig: router,
+      ),
+    );
+
+    router.go('/missing');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Not found'), findsOneWidget);
   });
 }

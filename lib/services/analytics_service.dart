@@ -1,4 +1,5 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 
 /// Thin wrapper around [FirebaseAnalytics] so the UI can safely
 /// no-op when analytics is disabled.
@@ -23,9 +24,16 @@ class AnalyticsService {
 
   static Future<void> logEvent(
     String name, {
-    Map<String, Object>? parameters,
+    Map<String, Object?>? parameters,
   }) async {
-    await _analytics?.logEvent(name: name, parameters: parameters);
+    final sanitized = parameters == null
+        ? null
+        : Map<String, Object>.fromEntries(
+            parameters.entries
+                .where((entry) => entry.value != null)
+                .map((entry) => MapEntry(entry.key, entry.value!)),
+          );
+    await _analytics?.logEvent(name: name, parameters: sanitized);
   }
 
   static Future<void> logScreenView(
@@ -36,5 +44,11 @@ class AnalyticsService {
       screenName: screenName,
       screenClass: screenClass ?? screenName,
     );
+  }
+
+  @visibleForTesting
+  static void reset() {
+    _analytics = null;
+    _observer = null;
   }
 }
