@@ -113,6 +113,14 @@ jobs:
         with:
           flutter-version: ${{ steps.fvm.outputs.version }}
           cache: true
+      - name: Cache pub cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-pub-
       - name: Cache Flutter build dirs (.dart_tool, build)
         uses: actions/cache@v4
         with:
@@ -180,6 +188,14 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+      - name: Cache pub cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ steps.fvm.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-${{ steps.fvm.outputs.version }}-
+            ${{ runner.os }}-pub-
       - name: Cache Flutter build dirs (.dart_tool, build)
         uses: actions/cache@v4
         with:
@@ -237,12 +253,16 @@ jobs:
           FLAVOR_CAP=$(printf '%s' "$FLAVOR" | awk '{printf toupper(substr($0,1,1)) substr($0,2)}')
           echo "FLAVOR_CAP=$FLAVOR_CAP" >> $GITHUB_ENV
 
+      - name: Warm Flutter dependencies
+        run: flutter pub get
+
       - name: Build Android APK
         run: |
           flutter build apk --release \
             --flavor "$FLAVOR" \
             --build-name "$APP_VERSION_NAME" \
-            --build-number "$APP_BUILD_NUMBER"
+            --build-number "$APP_BUILD_NUMBER" \
+            --no-pub
       - name: Upload Crashlytics mapping
         run: |
           cd android
@@ -259,6 +279,14 @@ jobs:
 
           cp "$APK_SRC" "$APK_OUT"
           echo "APK_OUT=$APK_OUT" >> $GITHUB_ENV
+
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            KIND="Nightly"
+          else
+            KIND="Manual"
+          fi
+          RELEASE_NOTES="${FLAVOR_CAP} ${KIND} v${APP_VERSION_NAME}.${APP_BUILD_NUMBER} on ${DATE}"
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
       - name: Upload Android APK artifact
         uses: actions/upload-artifact@v4
@@ -297,48 +325,11 @@ jobs:
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
           create_credentials_file: true
 
-      - name: Install Node.js (for Firebase CLI)
-        uses: actions/setup-node@v5
+      - name: Distribute to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
-          node-version: '20'
-
-      - name: Distribute to Firebase App Distribution (CLI)
-        shell: bash
-        env:
-          FIREBASE_APP_ID: ${{ env.FIREBASE_APP_ID }}
-          APK_OUT: ${{ env.APK_OUT }}
-          FLAVOR_CAP: ${{ env.FLAVOR_CAP }}
-          APP_VERSION_NAME: ${{ env.APP_VERSION_NAME }}
-          APP_BUILD_NUMBER: ${{ env.APP_BUILD_NUMBER }}
-          DATE: ${{ env.DATE }}
-          FIREBASE_TESTERS_GROUP: ${{ vars.FIREBASE_TESTERS_GROUP || 'internal' }}
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.fb_auth.outputs.credentials_file_path }}
-          GCP_PROJECT_ID: ${{ steps.fb_auth.outputs.project_id || vars.GCP_PROJECT_ID }}
-        run: |
-          # Install Firebase CLI
-          npm install -g firebase-tools@13
-
-          # Ensure workload identity credentials are used by gcloud and Firebase CLI
-          if [ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]; then
-            echo "GOOGLE_APPLICATION_CREDENTIALS is not set" >&2
-            exit 1
-          fi
-          if [ -z "${GCP_PROJECT_ID:-}" ]; then
-            echo "GCP_PROJECT_ID is not set" >&2
-            exit 1
-          fi
-
-          # Compose release notes
-          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
-            KIND="Nightly"
-          else
-            KIND="Manual"
-          fi
-          RELEASE_NOTES="${FLAVOR_CAP} ${KIND} v${APP_VERSION_NAME}.${APP_BUILD_NUMBER} on ${DATE}"
-
-          # Firebase CLI will discover the WIF credentials via GOOGLE_APPLICATION_CREDENTIALS
-          firebase appdistribution:distribute "$APK_OUT" \
-            --app "$FIREBASE_APP_ID" \
-            --groups "${FIREBASE_TESTERS_GROUP}" \
-            --release-notes "$RELEASE_NOTES" \
-            --project "$GCP_PROJECT_ID"
+          appId: ${{ env.FIREBASE_APP_ID }}
+          serviceCredentialsFile: ${{ steps.fb_auth.outputs.credentials_file_path }}
+          file: ${{ env.APK_OUT }}
+          groups: ${{ vars.FIREBASE_TESTERS_GROUP || 'internal' }}
+          releaseNotes: ${{ env.RELEASE_NOTES }}
