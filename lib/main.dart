@@ -144,26 +144,35 @@ class _ConsentPromptOverlay extends ConsumerStatefulWidget {
 class _ConsentPromptOverlayState extends ConsumerState<_ConsentPromptOverlay> {
   TelemetryController? _controller;
   bool _dialogShown = false;
+  ProviderSubscription<TelemetryController>? _subscription;
 
   @override
   void initState() {
     super.initState();
-    ref.listen<TelemetryController>(telemetryControllerProvider, (
-      previous,
-      controller,
-    ) {
-      if (!identical(controller, _controller)) {
-        _controller?.removeListener(_handleControllerChanged);
-        _controller = controller..addListener(_handleControllerChanged);
-      }
-      _maybeShowDialog();
-    }, fireImmediately: true);
+    _attachController(ref.read(telemetryControllerProvider));
+    _maybeShowDialog();
+
+    _subscription = ref.listenManual<TelemetryController>(
+      telemetryControllerProvider,
+      (previous, controller) {
+        _attachController(controller);
+        _maybeShowDialog();
+      },
+    );
   }
 
   @override
   void dispose() {
     _controller?.removeListener(_handleControllerChanged);
+    _subscription?.close();
     super.dispose();
+  }
+
+  void _attachController(TelemetryController controller) {
+    if (!identical(controller, _controller)) {
+      _controller?.removeListener(_handleControllerChanged);
+      _controller = controller..addListener(_handleControllerChanged);
+    }
   }
 
   void _handleControllerChanged() {
@@ -178,7 +187,14 @@ class _ConsentPromptOverlayState extends ConsumerState<_ConsentPromptOverlay> {
     if (controller.hasRecordedDecision) return;
 
     final navigatorContext = widget.navigatorKey.currentContext;
-    if (navigatorContext == null) return;
+    if (navigatorContext == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _maybeShowDialog();
+        }
+      });
+      return;
+    }
 
     _dialogShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
