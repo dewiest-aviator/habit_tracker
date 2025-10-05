@@ -13,6 +13,10 @@ import 'package:habit_tracker/features/settings/application/controllers/notifica
 import 'package:habit_tracker/features/settings/application/controllers/theme_controller.dart';
 import 'package:habit_tracker/features/settings/application/providers/notification_settings_provider.dart';
 import 'package:habit_tracker/features/settings/application/providers/theme_provider.dart';
+import 'package:habit_tracker/features/settings/application/controllers/language_controller.dart';
+import 'package:habit_tracker/features/settings/application/providers/language_provider.dart';
+import 'package:habit_tracker/l10n/app_localizations.dart';
+import 'package:habit_tracker/l10n/app_localizations_en.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -27,6 +31,7 @@ void main() {
   late _MockCrashlytics crashlytics;
   late ThemeController themeController;
   late NotificationSettingsController notificationController;
+  late LanguageController languageController;
   late PackageInfo packageInfo;
 
   setUp(() async {
@@ -74,6 +79,9 @@ void main() {
     notificationController = NotificationSettingsController();
     await notificationController.load();
 
+    languageController = LanguageController();
+    await languageController.load();
+
     packageInfo = PackageInfo(
       appName: 'Habit Tracker',
       packageName: 'com.example.habit',
@@ -90,12 +98,14 @@ void main() {
         if (controller.analyticsObserver != null) controller.analyticsObserver!,
       ],
     );
+    final l10n = AppLocalizationsEn();
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           telemetryControllerProvider.overrideWith((ref) => controller),
           themeControllerProvider.overrideWith((ref) => themeController),
+          languageControllerProvider.overrideWith((ref) => languageController),
           notificationSettingsProvider.overrideWith(
             (ref) => notificationController,
           ),
@@ -105,20 +115,22 @@ void main() {
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
         ),
       ),
     );
 
     await tester.pumpAndSettle();
-    expect(find.text('Habits'), findsOneWidget);
+    expect(find.text(l10n.homeTitle), findsOneWidget);
 
     final settingsButton = find.byKey(const Key('btn_settings'));
     expect(settingsButton, findsOneWidget);
     await tester.tap(settingsButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text(l10n.settingsTitle), findsOneWidget);
 
     final backButton = find.byTooltip('Back');
     await tester.tap(backButton);
@@ -144,12 +156,15 @@ void main() {
         overrides: [
           telemetryControllerProvider.overrideWith((ref) => controller),
           themeControllerProvider.overrideWith((ref) => themeController),
+          languageControllerProvider.overrideWith((ref) => languageController),
           appInfoProvider.overrideWith((ref) async => packageInfo),
         ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
         ),
       ),

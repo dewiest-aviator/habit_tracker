@@ -11,6 +11,9 @@ import 'package:habit_tracker/features/settings/application/providers/notificati
 import 'package:habit_tracker/features/settings/application/providers/theme_provider.dart';
 import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
+import 'package:habit_tracker/features/settings/application/controllers/language_controller.dart';
+import 'package:habit_tracker/features/settings/application/providers/language_provider.dart';
+import 'package:habit_tracker/l10n/app_localizations_en.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -18,6 +21,7 @@ void main() {
   late TelemetryController controller;
   late ThemeController themeController;
   late NotificationSettingsController notificationController;
+  late LanguageController languageController;
   late PackageInfo packageInfo;
   late GoRouter router;
   late GlobalKey<NavigatorState> navigatorKey;
@@ -34,6 +38,9 @@ void main() {
 
     notificationController = NotificationSettingsController();
     await notificationController.load();
+
+    languageController = LanguageController();
+    await languageController.load();
 
     packageInfo = PackageInfo(
       appName: 'Habit Tracker',
@@ -65,6 +72,7 @@ void main() {
       overrides: [
         telemetryControllerProvider.overrideWith((ref) => controller),
         themeControllerProvider.overrideWith((ref) => themeController),
+        languageControllerProvider.overrideWith((ref) => languageController),
         notificationSettingsProvider.overrideWith(
           (ref) => notificationController,
         ),
@@ -75,13 +83,14 @@ void main() {
   }
 
   testWidgets('dismisses consent dialog when opting out', (tester) async {
+    final l10n = AppLocalizationsEn();
     await tester.pumpWidget(buildApp());
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Share Anonymous Usage Data?'), findsOneWidget);
+    expect(find.text(l10n.consentDialogTitle), findsOneWidget);
 
-    await tester.tap(find.text('Not now'));
+    await tester.tap(find.text(l10n.consentNotNow));
     await tester.pumpAndSettle();
 
     expect(controller.hasRecordedDecision, isTrue);
@@ -90,13 +99,14 @@ void main() {
   });
 
   testWidgets('records consent when user accepts', (tester) async {
+    final l10n = AppLocalizationsEn();
     await tester.pumpWidget(buildApp());
     await tester.pump();
     await tester.pump();
 
     expect(find.byType(AlertDialog), findsOneWidget);
 
-    await tester.tap(find.text('Share'));
+    await tester.tap(find.text(l10n.consentShare));
     await tester.pumpAndSettle();
 
     expect(controller.hasRecordedDecision, isTrue);

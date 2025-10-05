@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:habit_tracker/core/localization/l10n_extensions.dart';
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
 import 'package:habit_tracker/features/info/application/providers/app_info_provider.dart';
 import 'package:habit_tracker/features/info/presentation/screens/privacy_policy_screen.dart';
 import 'package:habit_tracker/features/info/presentation/screens/release_notes_screen.dart';
+import 'package:habit_tracker/features/settings/application/providers/language_provider.dart';
 import 'package:habit_tracker/features/settings/application/providers/notification_settings_provider.dart';
 import 'package:habit_tracker/features/settings/application/providers/theme_provider.dart';
+import 'package:habit_tracker/l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -20,6 +23,9 @@ class SettingsScreen extends ConsumerWidget {
     final themeController = ref.watch(themeControllerProvider);
     final themeMode = themeController.themeMode;
     const themeModes = [ThemeMode.system, ThemeMode.light, ThemeMode.dark];
+    final languageController = ref.watch(languageControllerProvider);
+    final currentLocale = languageController.locale;
+    final supportedLocales = AppLocalizations.supportedLocales;
     final appInfo = ref.watch(appInfoProvider);
     final notificationSettings = ref.watch(notificationSettingsProvider);
     final notificationsLoaded = notificationSettings.hasLoaded;
@@ -30,44 +36,100 @@ class SettingsScreen extends ConsumerWidget {
     ).formatTimeOfDay(reminderTime);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(context.l10n.settingsTitle)),
       body: ListView(
+        shrinkWrap: true,
         padding: const EdgeInsets.all(16),
         children: [
-          const _SectionHeader('Privacy & Data'),
+          _SectionHeader(context.l10n.settingsLanguageSection),
           const SizedBox(height: 12),
           _SettingsCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SwitchListTile.adaptive(
-                  key: const Key('switch_analytics_consent'),
-                  title: const Text('Share anonymous usage analytics'),
-                  subtitle: const Text(
-                    'Helps us understand which features are most useful.',
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonFormField<String>(
+                    key: const Key('dropdown_language'),
+                    initialValue: currentLocale?.languageCode ?? 'system',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.settingsLanguageSection,
+                      border: const OutlineInputBorder(),
+                    ),
+                    isExpanded: true,
+                    items: [
+                      DropdownMenuItem<String>(
+                        value: 'system',
+                        child: Text(context.l10n.settingsLanguageSystem),
+                      ),
+                      for (final localeOption in supportedLocales)
+                        DropdownMenuItem<String>(
+                          value: localeOption.languageCode,
+                          child: Text(_languageLabel(context, localeOption)),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null || value == 'system') {
+                        languageController.setLocale(null);
+                        return;
+                      }
+                      final locale = supportedLocales.firstWhere(
+                        (element) => element.languageCode == value,
+                        orElse: () => supportedLocales.first,
+                      );
+                      languageController.setLocale(locale);
+                    },
                   ),
-                  value: analyticsEnabled,
-                  onChanged: loaded
-                      ? (value) => telemetry.updateAnalyticsConsent(value)
-                      : null,
-                ),
-                const Divider(height: 0),
-                SwitchListTile.adaptive(
-                  key: const Key('switch_crash_consent'),
-                  title: const Text('Share crash reports'),
-                  subtitle: const Text(
-                    'Sends anonymized crash logs so we can fix issues faster.',
+                  const SizedBox(height: 12),
+                  Text(
+                    _languageDescription(context, currentLocale),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  value: crashEnabled,
-                  onChanged: loaded
-                      ? (value) => telemetry.updateCrashConsent(value)
-                      : null,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
-          const _SectionHeader('Notifications'),
+          _SectionHeader(context.l10n.settingsAppearanceSection),
+          const SizedBox(height: 12),
+          _SettingsCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonFormField<ThemeMode>(
+                    key: const Key('dropdown_theme'),
+                    initialValue: themeMode,
+                    decoration: InputDecoration(
+                      labelText: context.l10n.settingsThemeLabel,
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: themeModes
+                        .map(
+                          (mode) => DropdownMenuItem<ThemeMode>(
+                            value: mode,
+                            child: Text(_themeLabel(context, mode)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        themeController.setThemeMode(value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _themeDescription(context, themeMode),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _SectionHeader(context.l10n.settingsNotificationsSection),
           const SizedBox(height: 12),
           _SettingsCard(
             child: Column(
@@ -75,10 +137,8 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 SwitchListTile.adaptive(
                   key: const Key('switch_notifications_enabled'),
-                  title: const Text('Daily reminder notifications'),
-                  subtitle: const Text(
-                    'Receive a helpful nudge to complete today’s habits.',
-                  ),
+                  title: Text(context.l10n.settingsNotificationsToggle),
+                  subtitle: Text(context.l10n.settingsNotificationsSubtitle),
                   value: notificationsEnabled,
                   onChanged: notificationsLoaded
                       ? (value) => notificationSettings.setEnabled(value)
@@ -89,8 +149,11 @@ class SettingsScreen extends ConsumerWidget {
                   key: const Key('tile_notification_time'),
                   enabled: notificationsEnabled,
                   leading: const Icon(Icons.access_time),
-                  title: const Text('Reminder time'),
-                  subtitle: Text('Currently $formattedReminderTime'),
+                  title: Text(context.l10n.settingsNotificationTimeTitle),
+                  subtitle: Text(
+                    context.l10n
+                        .settingsNotificationTimeSubtitle(formattedReminderTime),
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: (!notificationsLoaded || !notificationsEnabled)
                       ? null
@@ -108,45 +171,36 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const _SectionHeader('Appearance'),
+          _SectionHeader(context.l10n.settingsPrivacySection),
           const SizedBox(height: 12),
           _SettingsCard(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DropdownButtonFormField<ThemeMode>(
-                    initialValue: themeMode,
-                    decoration: const InputDecoration(
-                      labelText: 'Theme mode',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: themeModes
-                        .map(
-                          (mode) => DropdownMenuItem<ThemeMode>(
-                            value: mode,
-                            child: Text(_themeLabel(mode)),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        themeController.setThemeMode(value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _themeDescription(themeMode),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile.adaptive(
+                  key: const Key('switch_analytics_consent'),
+                  title: Text(context.l10n.settingsAnalyticsToggle),
+                  subtitle: Text(context.l10n.settingsAnalyticsSubtitle),
+                  value: analyticsEnabled,
+                  onChanged: loaded
+                      ? (value) => telemetry.updateAnalyticsConsent(value)
+                      : null,
+                ),
+                const Divider(height: 0),
+                SwitchListTile.adaptive(
+                  key: const Key('switch_crash_consent'),
+                  title: Text(context.l10n.settingsCrashToggle),
+                  subtitle: Text(context.l10n.settingsCrashSubtitle),
+                  value: crashEnabled,
+                  onChanged: loaded
+                      ? (value) => telemetry.updateCrashConsent(value)
+                      : null,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
-          const _SectionHeader('About'),
+          _SectionHeader(context.l10n.settingsAboutSection),
           const SizedBox(height: 12),
           _SettingsCard(
             child: Column(
@@ -158,7 +212,10 @@ class SettingsScreen extends ConsumerWidget {
                     leading: const Icon(Icons.info_outline),
                     title: Text(info.appName),
                     subtitle: Text(
-                      'v${info.version}.${info.buildNumber} - version name and build number',
+                      context.l10n.settingsVersionLabel(
+                        info.version,
+                        info.buildNumber,
+                      ),
                     ),
                   ),
                   loading: () => const ListTile(
@@ -180,8 +237,8 @@ class SettingsScreen extends ConsumerWidget {
                 const Divider(height: 0),
                 ListTile(
                   leading: const Icon(Icons.article_outlined),
-                  title: const Text('Release notes'),
-                  subtitle: const Text('See what changed in each version'),
+                  title: Text(context.l10n.settingsReleaseNotes),
+                  subtitle: Text(context.l10n.settingsReleaseNotesSubtitle),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.of(context).push(
@@ -194,8 +251,8 @@ class SettingsScreen extends ConsumerWidget {
                 const Divider(height: 0),
                 ListTile(
                   leading: const Icon(Icons.privacy_tip_outlined),
-                  title: const Text('Privacy policy'),
-                  subtitle: const Text('How we handle your data'),
+                  title: Text(context.l10n.settingsPrivacyPolicy),
+                  subtitle: Text(context.l10n.settingsPrivacyPolicySubtitle),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.of(context).push(
@@ -240,24 +297,43 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-String _themeLabel(ThemeMode mode) {
+String _themeLabel(BuildContext context, ThemeMode mode) {
   switch (mode) {
     case ThemeMode.system:
-      return 'Use system setting';
+      return context.l10n.settingsThemeLabelSystem;
     case ThemeMode.light:
-      return 'Light mode';
+      return context.l10n.settingsThemeLabelLight;
     case ThemeMode.dark:
-      return 'Dark mode';
+      return context.l10n.settingsThemeLabelDark;
   }
 }
 
-String _themeDescription(ThemeMode mode) {
+String _themeDescription(BuildContext context, ThemeMode mode) {
   switch (mode) {
     case ThemeMode.system:
-      return 'Automatically follow device appearance';
+      return context.l10n.settingsThemeDescriptionSystem;
     case ThemeMode.light:
-      return 'Always use a light theme';
+      return context.l10n.settingsThemeDescriptionLight;
     case ThemeMode.dark:
-      return 'Always use a dark theme';
+      return context.l10n.settingsThemeDescriptionDark;
   }
+}
+
+String _languageLabel(BuildContext context, Locale locale) {
+  switch (locale.languageCode) {
+    case 'fr':
+      return context.l10n.settingsLanguageFrench;
+    case 'en':
+    default:
+      return context.l10n.settingsLanguageEnglish;
+  }
+}
+
+String _languageDescription(BuildContext context, Locale? locale) {
+  if (locale == null) {
+    return context.l10n.settingsLanguageDescriptionSystem;
+  }
+  return context.l10n.settingsLanguageDescription(
+    _languageLabel(context, locale),
+  );
 }
