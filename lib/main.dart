@@ -15,6 +15,10 @@ import 'app_config.dart';
 import 'app_router.dart';
 import 'state/telemetry_controller.dart';
 import 'state/telemetry_provider.dart';
+import 'state/theme_controller.dart';
+import 'state/theme_provider.dart';
+import 'state/notification_settings_controller.dart';
+import 'state/notification_settings_provider.dart';
 import 'theme/app_theme.dart';
 
 FirebaseOptions get firebaseOptions {
@@ -50,6 +54,12 @@ Future<void> main() async {
     enableFirebase: enableFirebase,
   );
   await telemetryController.initialize();
+
+  final themeController = ThemeController();
+  await themeController.load();
+
+  final notificationSettingsController = NotificationSettingsController();
+  await notificationSettingsController.load();
 
   if (enableFirebase) {
     // Forward Flutter framework errors
@@ -94,6 +104,10 @@ Future<void> main() async {
     ProviderScope(
       overrides: [
         telemetryControllerProvider.overrideWith((ref) => telemetryController),
+        themeControllerProvider.overrideWith((ref) => themeController),
+        notificationSettingsProvider.overrideWith(
+          (ref) => notificationSettingsController,
+        ),
       ],
       child: HabitTrackerApp(
         router: router,
@@ -103,7 +117,7 @@ Future<void> main() async {
   );
 }
 
-class HabitTrackerApp extends StatelessWidget {
+class HabitTrackerApp extends ConsumerWidget {
   const HabitTrackerApp({
     super.key,
     required this.router,
@@ -114,12 +128,15 @@ class HabitTrackerApp extends StatelessWidget {
   final GlobalKey<NavigatorState> rootNavigatorKey;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeControllerProvider).themeMode;
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Habit Tracker${AppConfig.nameSuffix}',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) =>
           _ConsentPromptOverlay(navigatorKey: rootNavigatorKey, child: child),

@@ -46,9 +46,11 @@ class AnalyticsService {
     );
   }
 
-  @visibleForTesting
-  static void reset() {
+  static void disable() {
     _analytics = null;
     _observer = null;
   }
+
+  @visibleForTesting
+  static void reset() => disable();
 }
