@@ -256,4 +256,45 @@ void main() {
     verifyNever(() => notificationService.requestPermission());
     verify(() => habitsRepository.saveHabit(any())).called(1);
   });
+
+  testWidgets('skip jumps to reminders step with finish enabled', (tester) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          name: 'onboarding',
+          builder: (context, state) => const OnboardingScreen(),
+        ),
+        GoRoute(
+          path: '/home',
+          name: 'home',
+          builder: (context, state) =>
+              const Scaffold(body: Center(child: Text('Home Screen'))),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await _pumpOnboarding(
+      tester,
+      router: router,
+      habitsRepository: habitsRepository,
+      notificationService: notificationService,
+      notificationSettings: notificationSettings,
+      prefs: prefs,
+    );
+
+    await tester.tap(find.text(l10n.onboardingSkip));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.onboardingNotificationsTitle), findsOneWidget);
+    expect(notificationSettings.setEnabledCallCount, 1);
+    expect(notificationSettings.lastEnabledValue, isFalse);
+
+    final finishFinder = find.widgetWithText(
+      ElevatedButton,
+      l10n.onboardingFinishCta,
+    );
+    expect(tester.widget<ElevatedButton>(finishFinder).onPressed, isNotNull);
+  });
 }

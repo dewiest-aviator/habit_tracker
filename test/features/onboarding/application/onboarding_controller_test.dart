@@ -130,5 +130,18 @@ void main() {
     );
     verify(() => notificationSettings.setEnabled(false)).called(1);
   });
+
+  test('skip to notifications preselects declined reminders', () async {
+    final controller = buildController();
+
+    await controller.skipToNotifications();
+
+    expect(controller.state.pageIndex, 2);
+    expect(
+      controller.state.permissionStatus,
+      NotificationPermissionStatus.denied,
+    );
+    verify(() => notificationSettings.setEnabled(false)).called(1);
+  });
 }
 

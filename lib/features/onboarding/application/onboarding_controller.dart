@@ -39,7 +39,10 @@ class OnboardingController extends StateNotifier<OnboardingState> {
     state = state.copyWith(pageIndex: index);
   }
 
-  void skipToNotifications() {
+  Future<void> skipToNotifications() async {
+    if (state.permissionStatus == NotificationPermissionStatus.idle) {
+      await declineNotifications();
+    }
     setPageIndex(2);
   }
 

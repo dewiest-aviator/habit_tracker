@@ -152,23 +152,27 @@ class _HabitSelectionPage extends ConsumerWidget {
     final controller = ref.read(onboardingControllerProvider.notifier);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           l10n.onboardingHabitsTitle,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           l10n.onboardingHabitsSubtitle,
           style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         Expanded(
           child: SingleChildScrollView(
             child: Wrap(
+              alignment: WrapAlignment.center,
+              runAlignment: WrapAlignment.center,
               spacing: 12,
               runSpacing: 12,
               children: [
@@ -187,16 +191,20 @@ class _HabitSelectionPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: state.canContinue
-              ? () => controller.setPageIndex(2)
-              : null,
-          child: Text(l10n.onboardingContinue),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: state.canContinue
+                ? () => controller.setPageIndex(2)
+                : null,
+            child: Text(l10n.onboardingContinue),
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           l10n.onboardingSelectionHint,
           style: theme.textTheme.bodySmall,
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -215,36 +223,42 @@ class _NotificationsPage extends ConsumerWidget {
     final controller = ref.read(onboardingControllerProvider.notifier);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           l10n.onboardingNotificationsTitle,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           l10n.onboardingNotificationsSubtitle,
           style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: state.isRequestingPermission
-              ? null
-              : () => controller.enableNotifications(),
-          child: state.isRequestingPermission
-              ? SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colorScheme.onPrimary,
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: state.isRequestingPermission
+                ? null
+                : () => controller.enableNotifications(),
+            child: state.isRequestingPermission
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.onPrimary,
+                      ),
                     ),
-                  ),
+                  )
                 )
-              : Text(l10n.onboardingEnableReminders),
+                : Text(l10n.onboardingEnableReminders),
+          ),
         ),
         TextButton(
           onPressed: state.isRequestingPermission
@@ -258,7 +272,7 @@ class _NotificationsPage extends ConsumerWidget {
           child: state.hasNotificationChoice
               ? Column(
                   key: ValueKey(state.permissionStatus),
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       state.permissionStatus ==
@@ -266,6 +280,7 @@ class _NotificationsPage extends ConsumerWidget {
                           ? l10n.onboardingNotificationsGranted
                           : l10n.onboardingNotificationsDenied,
                       style: theme.textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -273,6 +288,7 @@ class _NotificationsPage extends ConsumerWidget {
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 )
@@ -288,19 +304,22 @@ class _NotificationsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
         ],
-        ElevatedButton(
-          onPressed: state.canFinish
-              ? () async {
-                  final success = await controller.completeOnboarding();
-                  if (!context.mounted || !success) {
-                    return;
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: state.canFinish
+                ? () async {
+                    final success = await controller.completeOnboarding();
+                    if (!context.mounted || !success) {
+                      return;
+                    }
+                    if (context.mounted) {
+                      context.goNamed('home');
+                    }
                   }
-                  if (context.mounted) {
-                    context.goNamed('home');
-                  }
-                }
-              : null,
-          child: Text(l10n.onboardingFinishCta),
+                : null,
+            child: Text(l10n.onboardingFinishCta),
+          ),
         ),
       ],
     );
