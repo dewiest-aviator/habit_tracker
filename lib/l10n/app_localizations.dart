@@ -367,6 +367,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Privacy Policy'**
   String get privacyPolicyTitle;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Build better routines one day at a time'**
+  String get onboardingTagline;
+
+  /// No description provided for @onboardingGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get onboardingGetStarted;
+
+  /// No description provided for @onboardingGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Track up to three daily habits'**
+  String get onboardingGoal;
+
+  /// No description provided for @onboardingHabitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your starter habits'**
+  String get onboardingHabitsTitle;
+
+  /// No description provided for @onboardingHabitsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up to three habits to jump-start your routine.'**
+  String get onboardingHabitsSubtitle;
+
+  /// No description provided for @onboardingContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get onboardingContinue;
+
+  /// No description provided for @onboardingSelectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add or edit habits later from the dashboard.'**
+  String get onboardingSelectionHint;
+
+  /// No description provided for @onboardingNotificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay on track with reminders'**
+  String get onboardingNotificationsTitle;
+
+  /// No description provided for @onboardingNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable reminders so we can nudge you to keep your streaks.'**
+  String get onboardingNotificationsSubtitle;
+
+  /// No description provided for @onboardingEnableReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Reminders'**
+  String get onboardingEnableReminders;
+
+  /// No description provided for @onboardingMaybeLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get onboardingMaybeLater;
+
+  /// No description provided for @onboardingNotificationsGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders are on! We\'ll send a gentle nudge each day.'**
+  String get onboardingNotificationsGranted;
+
+  /// No description provided for @onboardingNotificationsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'No worries! You can turn reminders on later from Settings.'**
+  String get onboardingNotificationsDenied;
+
+  /// No description provided for @onboardingFinishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re ready to start!'**
+  String get onboardingFinishTitle;
+
+  /// No description provided for @onboardingFinishCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Dashboard'**
+  String get onboardingFinishCta;
+
+  /// Displayed when saving onboarding data fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong: {message}'**
+  String onboardingError(String message);
+
+  /// No description provided for @onboardingHabitMeditate.
+  ///
+  /// In en, this message translates to:
+  /// **'Meditate'**
+  String get onboardingHabitMeditate;
+
+  /// No description provided for @onboardingHabitWalk.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk'**
+  String get onboardingHabitWalk;
+
+  /// No description provided for @onboardingHabitHydrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Drink water'**
+  String get onboardingHabitHydrate;
+
+  /// No description provided for @onboardingHabitJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get onboardingHabitJournal;
+
+  /// No description provided for @onboardingHabitStretch.
+  ///
+  /// In en, this message translates to:
+  /// **'Stretch'**
+  String get onboardingHabitStretch;
+
+  /// No description provided for @onboardingHabitRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get onboardingHabitRead;
 }
 
 class _AppLocalizationsDelegate

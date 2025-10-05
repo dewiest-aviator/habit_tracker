@@ -71,5 +71,36 @@
     }
   },
   "releaseNotesTitle": "Notes de version",
-  "privacyPolicyTitle": "Politique de confidentialité"
+  "privacyPolicyTitle": "Politique de confidentialité",
+  "onboardingSkip": "Ignorer",
+  "onboardingTagline": "Construisez de meilleures routines un jour à la fois",
+  "onboardingGetStarted": "Commencer",
+  "onboardingGoal": "Suivez jusqu'à trois habitudes quotidiennes",
+  "onboardingHabitsTitle": "Choisissez vos habitudes de départ",
+  "onboardingHabitsSubtitle": "Sélectionnez jusqu'à trois habitudes pour lancer votre routine.",
+  "onboardingContinue": "Continuer",
+  "onboardingSelectionHint": "Vous pourrez ajouter ou modifier des habitudes plus tard depuis le tableau de bord.",
+  "onboardingNotificationsTitle": "Restez sur la bonne voie avec des rappels",
+  "onboardingNotificationsSubtitle": "Activez les rappels pour que nous puissions vous encourager à tenir vos séries.",
+  "onboardingEnableReminders": "Activer les rappels",
+  "onboardingMaybeLater": "Plus tard",
+  "onboardingNotificationsGranted": "Les rappels sont activés ! Nous vous enverrons un petit rappel chaque jour.",
+  "onboardingNotificationsDenied": "Pas de souci ! Vous pourrez activer les rappels plus tard dans les paramètres.",
+  "onboardingFinishTitle": "Vous êtes prêt·e à commencer !",
+  "onboardingFinishCta": "Aller au tableau de bord",
+  "onboardingError": "Un problème est survenu : {message}",
+  "@onboardingError": {
+    "description": "Affiché lorsque l'enregistrement de l'onboarding échoue.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingHabitMeditate": "Méditer",
+  "onboardingHabitWalk": "Marcher",
+  "onboardingHabitHydrate": "Boire de l'eau",
+  "onboardingHabitJournal": "Écrire dans mon journal",
+  "onboardingHabitStretch": "M'étirer",
+  "onboardingHabitRead": "Lire"
 }

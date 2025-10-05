@@ -71,5 +71,36 @@
     }
   },
   "releaseNotesTitle": "Release Notes",
-  "privacyPolicyTitle": "Privacy Policy"
+  "privacyPolicyTitle": "Privacy Policy",
+  "onboardingSkip": "Skip",
+  "onboardingTagline": "Build better routines one day at a time",
+  "onboardingGetStarted": "Get Started",
+  "onboardingGoal": "Track up to three daily habits",
+  "onboardingHabitsTitle": "Choose your starter habits",
+  "onboardingHabitsSubtitle": "Pick up to three habits to jump-start your routine.",
+  "onboardingContinue": "Continue",
+  "onboardingSelectionHint": "You can add or edit habits later from the dashboard.",
+  "onboardingNotificationsTitle": "Stay on track with reminders",
+  "onboardingNotificationsSubtitle": "Enable reminders so we can nudge you to keep your streaks.",
+  "onboardingEnableReminders": "Enable Reminders",
+  "onboardingMaybeLater": "Later",
+  "onboardingNotificationsGranted": "Reminders are on! We'll send a gentle nudge each day.",
+  "onboardingNotificationsDenied": "No worries! You can turn reminders on later from Settings.",
+  "onboardingFinishTitle": "You're ready to start!",
+  "onboardingFinishCta": "Go to Dashboard",
+  "onboardingError": "Something went wrong: {message}",
+  "@onboardingError": {
+    "description": "Displayed when saving onboarding data fails.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingHabitMeditate": "Meditate",
+  "onboardingHabitWalk": "Walk",
+  "onboardingHabitHydrate": "Drink water",
+  "onboardingHabitJournal": "Journal",
+  "onboardingHabitStretch": "Stretch",
+  "onboardingHabitRead": "Read"
 }
