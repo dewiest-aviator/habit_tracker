@@ -23,8 +23,10 @@ class NotificationService {
             MacOSFlutterLocalNotificationsPlugin>();
 
     final androidResult = await androidImpl?.requestNotificationsPermission();
-    if (androidResult == true) {
-      granted = true;
+    if (androidImpl != null) {
+      if (androidResult == null || androidResult == true) {
+        granted = true;
+      }
     }
 
     final iosResult = await iosImpl?.requestPermissions(

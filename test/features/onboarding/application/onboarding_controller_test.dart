@@ -104,6 +104,21 @@ void main() {
     verify(() => notificationService.requestPermission()).called(1);
   });
 
+  test('handles platform denial when enabling reminders', () async {
+    when(() => notificationService.requestPermission())
+        .thenAnswer((_) async => false);
+    final controller = buildController();
+
+    await controller.enableNotifications();
+
+    expect(
+      controller.state.permissionStatus,
+      NotificationPermissionStatus.denied,
+    );
+    verify(() => notificationSettings.setEnabled(false)).called(1);
+    verify(() => notificationService.requestPermission()).called(1);
+  });
+
   test('declining reminders disables notifications', () async {
     final controller = buildController();
 
