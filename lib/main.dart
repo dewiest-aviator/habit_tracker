@@ -11,15 +11,15 @@ import 'package:go_router/go_router.dart';
 import 'firebase_options_dev.dart' as dev;
 import 'firebase_options_staging.dart' as stg;
 import 'firebase_options_prod.dart' as prod;
-import 'app_config.dart';
-import 'app_router.dart';
-import 'state/telemetry_controller.dart';
-import 'state/telemetry_provider.dart';
-import 'state/theme_controller.dart';
-import 'state/theme_provider.dart';
-import 'state/notification_settings_controller.dart';
-import 'state/notification_settings_provider.dart';
-import 'theme/app_theme.dart';
+import 'core/config/app_config.dart';
+import 'core/router/app_router.dart';
+import 'core/telemetry/controllers/telemetry_controller.dart';
+import 'core/telemetry/providers/telemetry_provider.dart';
+import 'features/settings/application/controllers/theme_controller.dart';
+import 'features/settings/application/providers/theme_provider.dart';
+import 'features/settings/application/controllers/notification_settings_controller.dart';
+import 'features/settings/application/providers/notification_settings_provider.dart';
+import 'core/theme/app_theme.dart';
 
 FirebaseOptions get firebaseOptions {
   if (AppConfig.isProd) return prod.DefaultFirebaseOptions.currentPlatform;
