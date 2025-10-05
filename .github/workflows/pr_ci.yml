@@ -10,6 +10,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   changes:
@@ -124,8 +125,8 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-  android-debug:
-    name: Android Debug Build
+  android-release:
+    name: Android Release Build
     needs: [changes, analyze-test]
     if: ${{ needs.changes.outputs.flutter == 'true' || needs.changes.outputs.android == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
@@ -206,27 +207,106 @@ jobs:
           echo "APP_VERSION_NAME=${{ vars.APP_VERSION_NAME }}-pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "APP_BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
 
-      - name: Build debug APK (flavor=dev) with version
+      - name: Restore signing keystore (shared PKCS12)
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_STORE_FILE_PATH: ${{ secrets.ANDROID_STORE_FILE_PATH }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          flutter build apk --debug \
+          if [ -z "${ANDROID_STORE_FILE_PATH:-}" ]; then
+            echo "Keystore path secret ANDROID_STORE_FILE_PATH is empty" >&2
+            exit 1
+          fi
+          mkdir -p "$(dirname "$ANDROID_STORE_FILE_PATH")"
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$ANDROID_STORE_FILE_PATH"
+          {
+            echo "ANDROID_STORE_FILE=$ANDROID_STORE_FILE_PATH"
+            echo "ANDROID_STORE_PASSWORD=$ANDROID_STORE_PASSWORD"
+            echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+            echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: Build release APK (flavor=dev) with version
+        run: |
+          flutter build apk --release \
             --flavor "$FLAVOR" \
             --build-name "$APP_VERSION_NAME" \
             --build-number "$APP_BUILD_NUMBER" \
             --dart-define=FIREBASE_ENABLED=true \
             --dart-define=FLAVOR="$FLAVOR"
 
-      - name: Rename APK artifact
+      - name: Upload Crashlytics mapping file
         run: |
-          SRC="build/app/outputs/flutter-apk/app-${FLAVOR}-debug.apk"
-          OUT="habittracker-android-${FLAVOR}-debug-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
-          cp "$SRC" "$OUT"
-          echo "APK_OUT=$OUT" >> $GITHUB_ENV
+          cd android
+          ./gradlew app:uploadCrashlyticsMappingFile${FLAVOR_CAP}Release
+
+      - name: Prepare release artifact and notes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          BUILD_TYPE="pr"
+          DATE=$(date +%Y%m%d)
+          echo "DATE=$DATE" >> $GITHUB_ENV
+
+          APK_SRC="build/app/outputs/flutter-apk/app-${FLAVOR}-release.apk"
+          APK_OUT="habittracker-android-${FLAVOR}-${BUILD_TYPE}-pr${PR_NUMBER}-v${APP_VERSION_NAME}.${APP_BUILD_NUMBER}.apk"
+
+          cp "$APK_SRC" "$APK_OUT"
+          echo "APK_OUT=$APK_OUT" >> $GITHUB_ENV
+
+          TITLE_TRIM=$(printf '%s' "$PR_TITLE" | tr '\n' ' ' | sed 's/  */ /g')
+          RELEASE_NOTES="PR #${PR_NUMBER} - ${TITLE_TRIM}"
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APK_OUT }}
           path: ${{ env.APK_OUT }}
+
+      - name: Derive Firebase appId from google-services.json
+        id: appid
+        uses: actions/github-script@v8
+        env:
+          ANDROID_GOOGLE_SERVICES_PATH: ${{ vars.ANDROID_GOOGLE_SERVICES_PATH }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = process.env.ANDROID_GOOGLE_SERVICES_PATH;
+            try {
+              const raw = fs.readFileSync(path, 'utf8');
+              const j = JSON.parse(raw);
+              const appId = j?.client?.[0]?.client_info?.mobilesdk_app_id;
+              if (!appId) {
+                core.setFailed(`mobilesdk_app_id not found in ${path}`);
+              } else {
+                core.info(`Detected Firebase appId: ${appId}`);
+                core.exportVariable('FIREBASE_APP_ID', appId);
+              }
+            } catch (e) {
+              core.setFailed(`Failed to read ${path}: ${e.message}`);
+            }
+
+      - name: Authenticate to Google Cloud for Firebase (WIF)
+        uses: google-github-actions/auth@v2
+        id: fb_auth
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+
+      - name: Distribute to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ env.FIREBASE_APP_ID }}
+          serviceCredentialsFile: ${{ steps.fb_auth.outputs.credentials_file_path }}
+          file: ${{ env.APK_OUT }}
+          groups: ${{ vars.FIREBASE_TESTERS_GROUP || 'internal' }}
+          releaseNotes: ${{ env.RELEASE_NOTES }}
 
   ios-debug:
     name: iOS Debug Build (Simulator)
