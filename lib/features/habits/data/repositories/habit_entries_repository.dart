@@ -1,0 +1,92 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
+
+import '../../../../core/database/habit_database.dart';
+import '../../domain/domain.dart';
+import '../models/habit_entry_record.dart';
+
+class HabitEntriesRepository {
+  HabitEntriesRepository(this._database);
+
+  final HabitDatabase _database;
+
+  Future<HabitEntry?> findEntry(String habitId, DateTime date) async {
+    final box = _database.habitEntriesBox;
+    final record = box.get(_entryKey(habitId, date));
+    return record?.toHabitEntry();
+  }
+
+  Future<List<HabitEntry>> fetchEntries({String? habitId}) async {
+    final box = _database.habitEntriesBox;
+    return _mapEntries(box, habitId: habitId);
+  }
+
+  Future<void> saveEntry(HabitEntry entry) async {
+    final box = _database.habitEntriesBox;
+    final record = HabitEntryRecord.fromHabitEntry(entry);
+    await box.put(_entryKey(entry.habitId, entry.date), record);
+  }
+
+  Future<void> deleteEntry(String habitId, DateTime date) async {
+    final box = _database.habitEntriesBox;
+    await box.delete(_entryKey(habitId, date));
+  }
+
+  Future<void> deleteEntriesForHabit(String habitId) async {
+    final box = _database.habitEntriesBox;
+    final keysToRemove = box.keys
+        .where((key) {
+          return key is String && key.startsWith(_habitPrefix(habitId));
+        })
+        .toList(growable: false);
+    await box.deleteAll(keysToRemove);
+  }
+
+  Stream<List<HabitEntry>> watchEntries({String? habitId}) {
+    final box = _database.habitEntriesBox;
+    StreamSubscription<BoxEvent>? subscription;
+    late final StreamController<List<HabitEntry>> controller;
+
+    void emitSnapshot() {
+      if (!controller.isClosed) {
+        controller.add(_mapEntries(box, habitId: habitId));
+      }
+    }
+
+    controller = StreamController<List<HabitEntry>>.broadcast(
+      onListen: () {
+        emitSnapshot();
+        subscription = box.watch().listen((_) => emitSnapshot());
+      },
+      onCancel: () async {
+        await subscription?.cancel();
+        subscription = null;
+      },
+    );
+
+    return controller.stream;
+  }
+
+  List<HabitEntry> _mapEntries(Box<HabitEntryRecord> box, {String? habitId}) {
+    final entries =
+        box.values
+            .where((record) => habitId == null || record.habitId == habitId)
+            .map((record) => record.toHabitEntry())
+            .toList(growable: false)
+          ..sort((a, b) => a.date.compareTo(b.date));
+    return List<HabitEntry>.unmodifiable(entries);
+  }
+
+  static String _entryKey(String habitId, DateTime date) {
+    return '${_habitPrefix(habitId)}${date.toIso8601String()}';
+  }
+
+  static String _habitPrefix(String habitId) => '$habitId|';
+}
+
+final habitEntriesRepositoryProvider = Provider<HabitEntriesRepository>((ref) {
+  final database = ref.watch(habitDatabaseProvider);
+  return HabitEntriesRepository(database);
+});
