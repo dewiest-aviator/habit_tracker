@@ -17,6 +17,7 @@ import 'core/localization/l10n_extensions.dart';
 import 'core/router/app_router.dart';
 import 'core/telemetry/controllers/telemetry_controller.dart';
 import 'core/telemetry/providers/telemetry_provider.dart';
+import 'core/database/habit_database.dart';
 import 'features/settings/application/controllers/theme_controller.dart';
 import 'features/settings/application/controllers/language_controller.dart';
 import 'features/settings/application/providers/theme_provider.dart';
@@ -46,6 +47,8 @@ Future<void> main() async {
 
   final enableFirebase = kFirebaseEnabled || kReleaseMode;
   final rootNavigatorKey = GlobalKey<NavigatorState>();
+  final database = HabitDatabase();
+  await database.initialize();
   if (enableFirebase) {
     try {
       await Firebase.initializeApp(options: firebaseOptions);
@@ -117,6 +120,7 @@ Future<void> main() async {
         notificationSettingsProvider.overrideWith(
           (ref) => notificationSettingsController,
         ),
+        habitDatabaseProvider.overrideWithValue(database),
       ],
       child: HabitTrackerApp(
         router: router,
