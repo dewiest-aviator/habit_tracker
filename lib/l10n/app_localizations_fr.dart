@@ -160,4 +160,82 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get privacyPolicyTitle => 'Politique de confidentialité';
+
+  @override
+  String get onboardingSkip => 'Ignorer';
+
+  @override
+  String get onboardingTagline =>
+      'Construisez de meilleures routines un jour à la fois';
+
+  @override
+  String get onboardingGetStarted => 'Commencer';
+
+  @override
+  String get onboardingGoal => 'Suivez jusqu\'à trois habitudes quotidiennes';
+
+  @override
+  String get onboardingHabitsTitle => 'Choisissez vos habitudes de départ';
+
+  @override
+  String get onboardingHabitsSubtitle =>
+      'Sélectionnez jusqu\'à trois habitudes pour lancer votre routine.';
+
+  @override
+  String get onboardingContinue => 'Continuer';
+
+  @override
+  String get onboardingSelectionHint =>
+      'Vous pourrez ajouter ou modifier des habitudes plus tard depuis le tableau de bord.';
+
+  @override
+  String get onboardingNotificationsTitle =>
+      'Restez sur la bonne voie avec des rappels';
+
+  @override
+  String get onboardingNotificationsSubtitle =>
+      'Activez les rappels pour que nous puissions vous encourager à tenir vos séries.';
+
+  @override
+  String get onboardingEnableReminders => 'Activer les rappels';
+
+  @override
+  String get onboardingMaybeLater => 'Plus tard';
+
+  @override
+  String get onboardingNotificationsGranted =>
+      'Les rappels sont activés ! Nous vous enverrons un petit rappel chaque jour.';
+
+  @override
+  String get onboardingNotificationsDenied =>
+      'Pas de souci ! Vous pourrez activer les rappels plus tard dans les paramètres.';
+
+  @override
+  String get onboardingFinishTitle => 'Vous êtes prêt·e à commencer !';
+
+  @override
+  String get onboardingFinishCta => 'Aller au tableau de bord';
+
+  @override
+  String onboardingError(String message) {
+    return 'Un problème est survenu : $message';
+  }
+
+  @override
+  String get onboardingHabitMeditate => 'Méditer';
+
+  @override
+  String get onboardingHabitWalk => 'Marcher';
+
+  @override
+  String get onboardingHabitHydrate => 'Boire de l\'eau';
+
+  @override
+  String get onboardingHabitJournal => 'Écrire dans mon journal';
+
+  @override
+  String get onboardingHabitStretch => 'M\'étirer';
+
+  @override
+  String get onboardingHabitRead => 'Lire';
 }

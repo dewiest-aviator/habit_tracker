@@ -154,4 +154,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicyTitle => 'Privacy Policy';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingTagline => 'Build better routines one day at a time';
+
+  @override
+  String get onboardingGetStarted => 'Get Started';
+
+  @override
+  String get onboardingGoal => 'Track up to three daily habits';
+
+  @override
+  String get onboardingHabitsTitle => 'Choose your starter habits';
+
+  @override
+  String get onboardingHabitsSubtitle =>
+      'Pick up to three habits to jump-start your routine.';
+
+  @override
+  String get onboardingContinue => 'Continue';
+
+  @override
+  String get onboardingSelectionHint =>
+      'You can add or edit habits later from the dashboard.';
+
+  @override
+  String get onboardingNotificationsTitle => 'Stay on track with reminders';
+
+  @override
+  String get onboardingNotificationsSubtitle =>
+      'Enable reminders so we can nudge you to keep your streaks.';
+
+  @override
+  String get onboardingEnableReminders => 'Enable Reminders';
+
+  @override
+  String get onboardingMaybeLater => 'Later';
+
+  @override
+  String get onboardingNotificationsGranted =>
+      'Reminders are on! We\'ll send a gentle nudge each day.';
+
+  @override
+  String get onboardingNotificationsDenied =>
+      'No worries! You can turn reminders on later from Settings.';
+
+  @override
+  String get onboardingFinishTitle => 'You\'re ready to start!';
+
+  @override
+  String get onboardingFinishCta => 'Go to Dashboard';
+
+  @override
+  String onboardingError(String message) {
+    return 'Something went wrong: $message';
+  }
+
+  @override
+  String get onboardingHabitMeditate => 'Meditate';
+
+  @override
+  String get onboardingHabitWalk => 'Walk';
+
+  @override
+  String get onboardingHabitHydrate => 'Drink water';
+
+  @override
+  String get onboardingHabitJournal => 'Journal';
+
+  @override
+  String get onboardingHabitStretch => 'Stretch';
+
+  @override
+  String get onboardingHabitRead => 'Read';
 }

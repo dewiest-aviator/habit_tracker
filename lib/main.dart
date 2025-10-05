@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options_dev.dart' as dev;
 import 'firebase_options_staging.dart' as stg;
@@ -18,6 +19,8 @@ import 'core/router/app_router.dart';
 import 'core/telemetry/controllers/telemetry_controller.dart';
 import 'core/telemetry/providers/telemetry_provider.dart';
 import 'core/database/habit_database.dart';
+import 'core/services/notification_service.dart';
+import 'features/onboarding/application/onboarding_controller.dart';
 import 'features/settings/application/controllers/theme_controller.dart';
 import 'features/settings/application/controllers/language_controller.dart';
 import 'features/settings/application/providers/theme_provider.dart';
@@ -72,6 +75,11 @@ Future<void> main() async {
   final notificationSettingsController = NotificationSettingsController();
   await notificationSettingsController.load();
 
+  final prefs = await SharedPreferences.getInstance();
+  final hasOnboarded =
+      prefs.getBool(OnboardingController.hasOnboardedKey) ?? false;
+  final notificationService = NotificationService();
+
   if (enableFirebase) {
     // Forward Flutter framework errors
     FlutterError.onError = (FlutterErrorDetails details) {
@@ -109,6 +117,7 @@ Future<void> main() async {
   final router = createAppRouter(
     observers: observers,
     navigatorKey: rootNavigatorKey,
+    hasCompletedOnboarding: hasOnboarded,
   );
 
   runApp(
@@ -121,6 +130,7 @@ Future<void> main() async {
           (ref) => notificationSettingsController,
         ),
         habitDatabaseProvider.overrideWithValue(database),
+        notificationServiceProvider.overrideWithValue(notificationService),
       ],
       child: HabitTrackerApp(
         router: router,
