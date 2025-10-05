@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   go_router: ^16.2.4
+  flutter_riverpod: ^2.5.1
   cupertino_icons: ^1.0.8
   firebase_core: ^4.1.1
   firebase_analytics: ^12.0.2

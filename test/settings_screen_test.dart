@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/screens/settings_screen.dart';
 import 'package:habit_tracker/services/analytics_service.dart';
@@ -42,14 +43,12 @@ void main() {
     await controller.initialize();
   });
 
-  tearDown(() {
-    controller.dispose();
-  });
-
   testWidgets('toggle updates consent state', (WidgetTester tester) async {
     await tester.pumpWidget(
-      TelemetryProvider(
-        controller: controller,
+      ProviderScope(
+        overrides: [
+          telemetryControllerProvider.overrideWith((ref) => controller),
+        ],
         child: const MaterialApp(home: SettingsScreen()),
       ),
     );
