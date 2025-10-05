@@ -1,6 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/app_router.dart';
 import 'package:habit_tracker/services/analytics_service.dart';
@@ -54,10 +55,6 @@ void main() {
     await controller.initialize();
   });
 
-  tearDown(() {
-    controller.dispose();
-  });
-
   testWidgets('navigates from Home to Settings', (WidgetTester tester) async {
     final router = createAppRouter(
       observers: [
@@ -66,8 +63,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      TelemetryProvider(
-        controller: controller,
+      ProviderScope(
+        overrides: [
+          telemetryControllerProvider.overrideWith((ref) => controller),
+        ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
@@ -107,8 +106,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      TelemetryProvider(
-        controller: controller,
+      ProviderScope(
+        overrides: [
+          telemetryControllerProvider.overrideWith((ref) => controller),
+        ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,

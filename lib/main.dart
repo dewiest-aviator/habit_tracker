@@ -2,6 +2,7 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -90,10 +91,14 @@ Future<void> main() async {
   );
 
   runApp(
-    HabitTrackerApp(
-      router: router,
-      telemetryController: telemetryController,
-      rootNavigatorKey: rootNavigatorKey,
+    ProviderScope(
+      overrides: [
+        telemetryControllerProvider.overrideWith((ref) => telemetryController),
+      ],
+      child: HabitTrackerApp(
+        router: router,
+        rootNavigatorKey: rootNavigatorKey,
+      ),
     ),
   );
 }
@@ -102,34 +107,27 @@ class HabitTrackerApp extends StatelessWidget {
   const HabitTrackerApp({
     super.key,
     required this.router,
-    required this.telemetryController,
     required this.rootNavigatorKey,
   });
 
   final GoRouter router;
-  final TelemetryController telemetryController;
   final GlobalKey<NavigatorState> rootNavigatorKey;
 
   @override
   Widget build(BuildContext context) {
-    return TelemetryProvider(
-      controller: telemetryController,
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Habit Tracker${AppConfig.nameSuffix}',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        routerConfig: router,
-        builder: (context, child) => _ConsentPromptOverlay(
-          navigatorKey: rootNavigatorKey,
-          child: child,
-        ),
-      ),
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'Habit Tracker${AppConfig.nameSuffix}',
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      routerConfig: router,
+      builder: (context, child) =>
+          _ConsentPromptOverlay(navigatorKey: rootNavigatorKey, child: child),
     );
   }
 }
 
-class _ConsentPromptOverlay extends StatefulWidget {
+class _ConsentPromptOverlay extends ConsumerStatefulWidget {
   const _ConsentPromptOverlay({
     required this.child,
     required this.navigatorKey,
@@ -139,28 +137,42 @@ class _ConsentPromptOverlay extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
 
   @override
-  State<_ConsentPromptOverlay> createState() => _ConsentPromptOverlayState();
+  ConsumerState<_ConsentPromptOverlay> createState() =>
+      _ConsentPromptOverlayState();
 }
 
-class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
+class _ConsentPromptOverlayState extends ConsumerState<_ConsentPromptOverlay> {
   TelemetryController? _controller;
   bool _dialogShown = false;
+  ProviderSubscription<TelemetryController>? _subscription;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final controller = TelemetryProvider.of(context);
-    if (!identical(controller, _controller)) {
-      _controller?.removeListener(_handleControllerChanged);
-      _controller = controller..addListener(_handleControllerChanged);
-      _maybeShowDialog();
-    }
+  void initState() {
+    super.initState();
+    _attachController(ref.read(telemetryControllerProvider));
+    _maybeShowDialog();
+
+    _subscription = ref.listenManual<TelemetryController>(
+      telemetryControllerProvider,
+      (previous, controller) {
+        _attachController(controller);
+        _maybeShowDialog();
+      },
+    );
   }
 
   @override
   void dispose() {
     _controller?.removeListener(_handleControllerChanged);
+    _subscription?.close();
     super.dispose();
+  }
+
+  void _attachController(TelemetryController controller) {
+    if (!identical(controller, _controller)) {
+      _controller?.removeListener(_handleControllerChanged);
+      _controller = controller..addListener(_handleControllerChanged);
+    }
   }
 
   void _handleControllerChanged() {
@@ -175,7 +187,14 @@ class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
     if (controller.hasRecordedDecision) return;
 
     final navigatorContext = widget.navigatorKey.currentContext;
-    if (navigatorContext == null) return;
+    if (navigatorContext == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _maybeShowDialog();
+        }
+      });
+      return;
+    }
 
     _dialogShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -193,7 +212,9 @@ class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
             actions: [
               TextButton(
                 onPressed: () async {
-                  await TelemetryProvider.of(context).updateConsent(false);
+                  await ref
+                      .read(telemetryControllerProvider)
+                      .updateConsent(false);
                   if (navigatorContext.mounted) {
                     Navigator.of(navigatorContext).pop();
                   }
@@ -202,7 +223,9 @@ class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
               ),
               FilledButton(
                 onPressed: () async {
-                  await TelemetryProvider.of(context).updateConsent(true);
+                  await ref
+                      .read(telemetryControllerProvider)
+                      .updateConsent(true);
                   if (navigatorContext.mounted) {
                     Navigator.of(navigatorContext).pop();
                   }
@@ -215,7 +238,8 @@ class _ConsentPromptOverlayState extends State<_ConsentPromptOverlay> {
       ).whenComplete(() {
         if (!mounted) return;
         // If the user dismissed via system back, keep showing next frame.
-        if (!_controller!.hasRecordedDecision) {
+        final controller = _controller;
+        if (controller != null && !controller.hasRecordedDecision) {
           _dialogShown = false;
           _maybeShowDialog();
         }
