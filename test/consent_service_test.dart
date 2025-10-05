@@ -12,20 +12,31 @@ void main() {
     await ConsentService.load();
 
     expect(ConsentService.hasLoaded, isTrue);
+    expect(ConsentService.hasAnalyticsDecision, isFalse);
+    expect(ConsentService.hasCrashDecision, isFalse);
     expect(ConsentService.hasRecordedDecision, isFalse);
+    expect(ConsentService.analyticsConsentGranted, isFalse);
+    expect(ConsentService.crashConsentGranted, isFalse);
     expect(ConsentService.consentGranted, isFalse);
   });
 
   test('setConsent persists and marks decision', () async {
     await ConsentService.load();
-    await ConsentService.setConsent(true);
+    await ConsentService.setAnalyticsConsent(true);
+    await ConsentService.setCrashConsent(false);
 
-    expect(ConsentService.consentGranted, isTrue);
+    expect(ConsentService.analyticsConsentGranted, isTrue);
+    expect(ConsentService.crashConsentGranted, isFalse);
+    expect(ConsentService.hasAnalyticsDecision, isTrue);
+    expect(ConsentService.hasCrashDecision, isTrue);
     expect(ConsentService.hasRecordedDecision, isTrue);
+    expect(ConsentService.consentGranted, isFalse);
 
     // Reload from storage to verify persistence
     await ConsentService.load();
-    expect(ConsentService.consentGranted, isTrue);
-    expect(ConsentService.hasRecordedDecision, isTrue);
+    expect(ConsentService.analyticsConsentGranted, isTrue);
+    expect(ConsentService.crashConsentGranted, isFalse);
+    expect(ConsentService.hasAnalyticsDecision, isTrue);
+    expect(ConsentService.hasCrashDecision, isTrue);
   });
 }

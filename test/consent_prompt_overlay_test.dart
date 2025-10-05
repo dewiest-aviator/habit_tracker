@@ -4,12 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:habit_tracker/main.dart';
 import 'package:habit_tracker/services/consent_service.dart';
+import 'package:habit_tracker/state/app_info_provider.dart';
+import 'package:habit_tracker/state/notification_settings_controller.dart';
+import 'package:habit_tracker/state/notification_settings_provider.dart';
 import 'package:habit_tracker/state/telemetry_controller.dart';
 import 'package:habit_tracker/state/telemetry_provider.dart';
+import 'package:habit_tracker/state/theme_controller.dart';
+import 'package:habit_tracker/state/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 void main() {
   late TelemetryController controller;
+  late ThemeController themeController;
+  late NotificationSettingsController notificationController;
+  late PackageInfo packageInfo;
   late GoRouter router;
   late GlobalKey<NavigatorState> navigatorKey;
 
@@ -19,6 +28,21 @@ void main() {
 
     controller = TelemetryController(enableFirebase: false);
     await controller.initialize();
+
+    themeController = ThemeController();
+    await themeController.load();
+
+    notificationController = NotificationSettingsController();
+    await notificationController.load();
+
+    packageInfo = PackageInfo(
+      appName: 'Habit Tracker',
+      packageName: 'com.example.habit',
+      version: '1.2.3',
+      buildNumber: '42',
+      buildSignature: 'sig',
+      installerStore: null,
+    );
 
     navigatorKey = GlobalKey<NavigatorState>();
     router = GoRouter(
@@ -40,6 +64,11 @@ void main() {
     return ProviderScope(
       overrides: [
         telemetryControllerProvider.overrideWith((ref) => controller),
+        themeControllerProvider.overrideWith((ref) => themeController),
+        notificationSettingsProvider.overrideWith(
+          (ref) => notificationController,
+        ),
+        appInfoProvider.overrideWith((ref) async => packageInfo),
       ],
       child: HabitTrackerApp(router: router, rootNavigatorKey: navigatorKey),
     );

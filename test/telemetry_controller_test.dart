@@ -61,7 +61,8 @@ void main() {
 
     expect(controller.isLoaded, isTrue);
     expect(controller.hasRecordedDecision, isFalse);
-    expect(controller.isConsentGranted, isFalse);
+    expect(controller.isAnalyticsEnabled, isFalse);
+    expect(controller.isCrashEnabled, isFalse);
     expect(AnalyticsService.enabled, isFalse);
 
     verify(() => analytics.setAnalyticsCollectionEnabled(false)).called(1);
@@ -69,7 +70,10 @@ void main() {
   });
 
   test('initialize enables telemetry when consent stored', () async {
-    SharedPreferences.setMockInitialValues({'analytics_consent': true});
+    SharedPreferences.setMockInitialValues({
+      'analytics_consent': true,
+      'crash_consent': true,
+    });
 
     final analytics = buildAnalyticsMock();
     final crashlytics = buildCrashlyticsMock();
@@ -104,6 +108,8 @@ void main() {
 
     await controller.updateConsent(true);
     expect(controller.isConsentGranted, isTrue);
+    expect(controller.isAnalyticsEnabled, isTrue);
+    expect(controller.isCrashEnabled, isTrue);
     verify(() => analytics.setAnalyticsCollectionEnabled(true)).called(2);
     verify(() => crashlytics.setCrashlyticsCollectionEnabled(true)).called(1);
 
@@ -112,7 +118,57 @@ void main() {
 
     await controller.updateConsent(false);
     expect(controller.isConsentGranted, isFalse);
+    expect(controller.isAnalyticsEnabled, isFalse);
+    expect(controller.isCrashEnabled, isFalse);
     verify(() => analytics.setAnalyticsCollectionEnabled(false)).called(1);
+    verify(() => crashlytics.setCrashlyticsCollectionEnabled(false)).called(1);
+  });
+
+  test('updateAnalyticsConsent toggles analytics only', () async {
+    final analytics = buildAnalyticsMock();
+    final crashlytics = buildCrashlyticsMock();
+
+    final controller = TelemetryController(
+      enableFirebase: true,
+      analytics: analytics,
+      crashlytics: crashlytics,
+    );
+    await controller.initialize();
+
+    await controller.updateAnalyticsConsent(true);
+    expect(controller.isAnalyticsEnabled, isTrue);
+    expect(controller.isCrashEnabled, isFalse);
+    verify(() => analytics.setAnalyticsCollectionEnabled(true)).called(2);
+    verifyNever(() => crashlytics.setCrashlyticsCollectionEnabled(true));
+
+    clearInteractions(analytics);
+
+    await controller.updateAnalyticsConsent(false);
+    expect(controller.isAnalyticsEnabled, isFalse);
+    verify(() => analytics.setAnalyticsCollectionEnabled(false)).called(1);
+  });
+
+  test('updateCrashConsent toggles crash collection only', () async {
+    final analytics = buildAnalyticsMock();
+    final crashlytics = buildCrashlyticsMock();
+
+    final controller = TelemetryController(
+      enableFirebase: true,
+      analytics: analytics,
+      crashlytics: crashlytics,
+    );
+    await controller.initialize();
+
+    await controller.updateCrashConsent(true);
+    expect(controller.isCrashEnabled, isTrue);
+    expect(controller.isAnalyticsEnabled, isFalse);
+    verify(() => crashlytics.setCrashlyticsCollectionEnabled(true)).called(1);
+    verifyNever(() => analytics.setAnalyticsCollectionEnabled(true));
+
+    clearInteractions(crashlytics);
+
+    await controller.updateCrashConsent(false);
+    expect(controller.isCrashEnabled, isFalse);
     verify(() => crashlytics.setCrashlyticsCollectionEnabled(false)).called(1);
   });
 }

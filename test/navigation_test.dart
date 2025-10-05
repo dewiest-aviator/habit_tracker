@@ -5,11 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/app_router.dart';
 import 'package:habit_tracker/services/analytics_service.dart';
+import 'package:habit_tracker/state/app_info_provider.dart';
+import 'package:habit_tracker/state/notification_settings_controller.dart';
+import 'package:habit_tracker/state/notification_settings_provider.dart';
 import 'package:habit_tracker/state/telemetry_controller.dart';
 import 'package:habit_tracker/state/telemetry_provider.dart';
+import 'package:habit_tracker/state/theme_controller.dart';
+import 'package:habit_tracker/state/theme_provider.dart';
 import 'package:habit_tracker/theme/app_theme.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class _MockAnalytics extends Mock implements FirebaseAnalytics {}
 
@@ -19,9 +25,17 @@ void main() {
   late TelemetryController controller;
   late _MockAnalytics analytics;
   late _MockCrashlytics crashlytics;
+  late ThemeController themeController;
+  late NotificationSettingsController notificationController;
+  late PackageInfo packageInfo;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({'analytics_consent': true});
+    SharedPreferences.setMockInitialValues({
+      'analytics_consent': true,
+      'crash_consent': true,
+      'notifications_enabled': true,
+      'notifications_time': '08:00',
+    });
     AnalyticsService.reset();
 
     analytics = _MockAnalytics();
@@ -53,6 +67,21 @@ void main() {
       crashlytics: crashlytics,
     );
     await controller.initialize();
+
+    themeController = ThemeController();
+    await themeController.load();
+
+    notificationController = NotificationSettingsController();
+    await notificationController.load();
+
+    packageInfo = PackageInfo(
+      appName: 'Habit Tracker',
+      packageName: 'com.example.habit',
+      version: '1.2.3',
+      buildNumber: '42',
+      buildSignature: 'sig',
+      installerStore: null,
+    );
   });
 
   testWidgets('navigates from Home to Settings', (WidgetTester tester) async {
@@ -66,6 +95,11 @@ void main() {
       ProviderScope(
         overrides: [
           telemetryControllerProvider.overrideWith((ref) => controller),
+          themeControllerProvider.overrideWith((ref) => themeController),
+          notificationSettingsProvider.overrideWith(
+            (ref) => notificationController,
+          ),
+          appInfoProvider.overrideWith((ref) async => packageInfo),
         ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
@@ -109,6 +143,8 @@ void main() {
       ProviderScope(
         overrides: [
           telemetryControllerProvider.overrideWith((ref) => controller),
+          themeControllerProvider.overrideWith((ref) => themeController),
+          appInfoProvider.overrideWith((ref) async => packageInfo),
         ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
