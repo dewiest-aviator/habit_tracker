@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:habit_tracker/core/localization/l10n_extensions.dart';
 import 'package:habit_tracker/core/services/analytics_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -11,7 +12,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Habits')),
+      appBar: AppBar(title: Text(context.l10n.homeTitle)),
       body: Center(
         child: ElevatedButton.icon(
           key: const Key('btn_settings'),
@@ -20,14 +21,14 @@ class HomeScreen extends StatelessWidget {
             context.push('/settings');
           },
           icon: const Icon(Icons.settings),
-          label: const Text('Settings'),
+          label: Text(context.l10n.homeSettingsTooltip),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           unawaited(AnalyticsService.logEvent('add_habit_tap'));
         },
-        tooltip: 'Add habit',
+        tooltip: context.l10n.homeAddHabitTooltip,
         child: const Icon(Icons.add),
       ),
     );

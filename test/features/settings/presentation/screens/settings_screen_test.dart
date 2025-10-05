@@ -6,11 +6,14 @@ import 'package:habit_tracker/core/services/consent_service.dart';
 import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
 import 'package:habit_tracker/features/info/application/providers/app_info_provider.dart';
+import 'package:habit_tracker/features/settings/application/controllers/language_controller.dart';
 import 'package:habit_tracker/features/settings/application/controllers/notification_settings_controller.dart';
 import 'package:habit_tracker/features/settings/application/controllers/theme_controller.dart';
+import 'package:habit_tracker/features/settings/application/providers/language_provider.dart';
 import 'package:habit_tracker/features/settings/application/providers/notification_settings_provider.dart';
 import 'package:habit_tracker/features/settings/application/providers/theme_provider.dart';
 import 'package:habit_tracker/features/settings/presentation/screens/settings_screen.dart';
+import 'package:habit_tracker/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -27,6 +30,7 @@ void main() {
   late _MockCrashlytics crashlytics;
   late ThemeController themeController;
   late NotificationSettingsController notificationController;
+  late LanguageController languageController;
   late PackageInfo packageInfo;
 
   setUp(() async {
@@ -57,6 +61,9 @@ void main() {
     notificationController = NotificationSettingsController();
     await notificationController.load();
 
+    languageController = LanguageController();
+    await languageController.load();
+
     packageInfo = PackageInfo(
       appName: 'Habit Tracker',
       packageName: 'com.example.habit',
@@ -70,17 +77,25 @@ void main() {
   testWidgets('analytics and crash toggles update consent state', (
     WidgetTester tester,
   ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           telemetryControllerProvider.overrideWith((ref) => controller),
           themeControllerProvider.overrideWith((ref) => themeController),
+          languageControllerProvider.overrideWith((ref) => languageController),
           notificationSettingsProvider.overrideWith(
             (ref) => notificationController,
           ),
           appInfoProvider.overrideWith((ref) async => packageInfo),
         ],
-        child: const MaterialApp(home: SettingsScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const SettingsScreen(),
+        ),
       ),
     );
 
@@ -88,6 +103,8 @@ void main() {
 
     final analyticsSwitch = find.byKey(const Key('switch_analytics_consent'));
     final crashSwitch = find.byKey(const Key('switch_crash_consent'));
+    await tester.ensureVisible(analyticsSwitch);
+    await tester.ensureVisible(crashSwitch);
     expect(analyticsSwitch, findsOneWidget);
     expect(crashSwitch, findsOneWidget);
 
@@ -108,24 +125,32 @@ void main() {
   });
 
   testWidgets('changing theme updates controller', (WidgetTester tester) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           telemetryControllerProvider.overrideWith((ref) => controller),
           themeControllerProvider.overrideWith((ref) => themeController),
+          languageControllerProvider.overrideWith((ref) => languageController),
           notificationSettingsProvider.overrideWith(
             (ref) => notificationController,
           ),
           appInfoProvider.overrideWith((ref) async => packageInfo),
         ],
-        child: const MaterialApp(home: SettingsScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const SettingsScreen(),
+        ),
       ),
     );
 
     await tester.pumpAndSettle();
     expect(themeController.themeMode, ThemeMode.system);
 
-    final dropdownFinder = find.byType(DropdownButtonFormField<ThemeMode>);
+    final dropdownFinder = find.byKey(const Key('dropdown_theme'));
     expect(dropdownFinder, findsOneWidget);
 
     final dropdownWidget = tester.widget<DropdownButtonFormField<ThemeMode>>(
@@ -145,12 +170,17 @@ void main() {
         overrides: [
           telemetryControllerProvider.overrideWith((ref) => controller),
           themeControllerProvider.overrideWith((ref) => themeController),
+          languageControllerProvider.overrideWith((ref) => languageController),
           notificationSettingsProvider.overrideWith(
             (ref) => notificationController,
           ),
           appInfoProvider.overrideWith((ref) async => packageInfo),
         ],
-        child: const MaterialApp(home: SettingsScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const SettingsScreen(),
+        ),
       ),
     );
 
@@ -174,5 +204,47 @@ void main() {
     // in this unit test, but we ensure the tile is enabled once notifications are.
     final listTile = tester.widget<ListTile>(timeTile);
     expect(listTile.enabled, isTrue);
+  });
+
+  testWidgets('changing language updates controller', (WidgetTester tester) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          telemetryControllerProvider.overrideWith((ref) => controller),
+          themeControllerProvider.overrideWith((ref) => themeController),
+          languageControllerProvider.overrideWith((ref) => languageController),
+          notificationSettingsProvider.overrideWith(
+            (ref) => notificationController,
+          ),
+          appInfoProvider.overrideWith((ref) async => packageInfo),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const SettingsScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(languageController.locale, isNull);
+
+    final dropdownFinder = find.byKey(const Key('dropdown_language'));
+    expect(dropdownFinder, findsOneWidget);
+
+    var dropdownWidget = tester.widget<DropdownButtonFormField<String>>(
+      dropdownFinder,
+    );
+    dropdownWidget.onChanged?.call('en');
+    await tester.pumpAndSettle();
+    expect(languageController.locale?.languageCode, 'en');
+
+    dropdownWidget = tester.widget<DropdownButtonFormField<String>>(dropdownFinder);
+    dropdownWidget.onChanged?.call('system');
+    await tester.pumpAndSettle();
+    expect(languageController.locale, isNull);
   });
 }

@@ -2,6 +2,7 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -12,14 +13,18 @@ import 'firebase_options_dev.dart' as dev;
 import 'firebase_options_staging.dart' as stg;
 import 'firebase_options_prod.dart' as prod;
 import 'core/config/app_config.dart';
+import 'core/localization/l10n_extensions.dart';
 import 'core/router/app_router.dart';
 import 'core/telemetry/controllers/telemetry_controller.dart';
 import 'core/telemetry/providers/telemetry_provider.dart';
 import 'features/settings/application/controllers/theme_controller.dart';
+import 'features/settings/application/controllers/language_controller.dart';
 import 'features/settings/application/providers/theme_provider.dart';
 import 'features/settings/application/controllers/notification_settings_controller.dart';
+import 'features/settings/application/providers/language_provider.dart';
 import 'features/settings/application/providers/notification_settings_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'l10n/app_localizations.dart';
 
 FirebaseOptions get firebaseOptions {
   if (AppConfig.isProd) return prod.DefaultFirebaseOptions.currentPlatform;
@@ -57,6 +62,9 @@ Future<void> main() async {
 
   final themeController = ThemeController();
   await themeController.load();
+
+  final languageController = LanguageController();
+  await languageController.load();
 
   final notificationSettingsController = NotificationSettingsController();
   await notificationSettingsController.load();
@@ -105,6 +113,7 @@ Future<void> main() async {
       overrides: [
         telemetryControllerProvider.overrideWith((ref) => telemetryController),
         themeControllerProvider.overrideWith((ref) => themeController),
+        languageControllerProvider.overrideWith((ref) => languageController),
         notificationSettingsProvider.overrideWith(
           (ref) => notificationSettingsController,
         ),
@@ -130,13 +139,28 @@ class HabitTrackerApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeControllerProvider).themeMode;
+    final locale = ref.watch(languageControllerProvider).locale;
+
+    final baseTitle =
+        Localizations.of<AppLocalizations>(context, AppLocalizations)
+                ?.appTitle ??
+            'Habit Tracker';
+    final effectiveTitle = '$baseTitle${AppConfig.nameSuffix}';
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Habit Tracker${AppConfig.nameSuffix}',
+      title: effectiveTitle,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
       builder: (context, child) =>
           _ConsentPromptOverlay(navigatorKey: rootNavigatorKey, child: child),
@@ -219,13 +243,12 @@ class _ConsentPromptOverlayState extends ConsumerState<_ConsentPromptOverlay> {
       showDialog<void>(
         context: navigatorContext,
         barrierDismissible: false,
-        builder: (context) {
+        builder: (dialogContext) {
+          final l10n = dialogContext.l10n;
+
           return AlertDialog(
-            title: const Text('Share Anonymous Usage Data?'),
-            content: const Text(
-              'Help us improve Habit Tracker by sharing anonymized usage metrics '
-              'and crash reports. You can change this later in Settings.',
-            ),
+            title: Text(l10n.consentDialogTitle),
+            content: Text(l10n.consentDialogBody),
             actions: [
               TextButton(
                 onPressed: () async {
@@ -236,7 +259,7 @@ class _ConsentPromptOverlayState extends ConsumerState<_ConsentPromptOverlay> {
                     Navigator.of(navigatorContext).pop();
                   }
                 },
-                child: const Text('Not now'),
+                child: Text(l10n.consentNotNow),
               ),
               FilledButton(
                 onPressed: () async {
@@ -247,7 +270,7 @@ class _ConsentPromptOverlayState extends ConsumerState<_ConsentPromptOverlay> {
                     Navigator.of(navigatorContext).pop();
                   }
                 },
-                child: const Text('Share'),
+                child: Text(l10n.consentShare),
               ),
             ],
           );

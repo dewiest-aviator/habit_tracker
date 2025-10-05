@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/features/info/application/providers/app_info_provider.dart';
 import 'package:habit_tracker/features/info/application/providers/remote_content_provider.dart';
 import 'package:habit_tracker/features/info/presentation/screens/release_notes_screen.dart';
+import 'package:habit_tracker/l10n/app_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -31,7 +32,11 @@ void main() {
           appInfoProvider.overrideWith((ref) async => packageInfo),
           httpClientProvider.overrideWithValue(client),
         ],
-        child: const MaterialApp(home: ReleaseNotesScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ReleaseNotesScreen(),
+        ),
       ),
     );
 
@@ -42,6 +47,15 @@ void main() {
     expect(htmlFinder, findsOneWidget);
     final htmlWidget = tester.widget<Html>(htmlFinder);
     expect(htmlWidget.data, contains('Release notes content'));
+
+    final toggleButton = find.byKey(const Key('btn_toggle_html_theme'));
+    expect(toggleButton, findsOneWidget);
+    await tester.tap(toggleButton);
+    await tester.pumpAndSettle();
+
+    final updatedHtml = tester.widget<Html>(htmlFinder);
+    final bodyStyle = updatedHtml.style['body'];
+    expect(bodyStyle?.color, ThemeData.dark().colorScheme.onSurface);
   });
 
   testWidgets('shows error when release notes fetch fails', (tester) async {
@@ -64,7 +78,11 @@ void main() {
           appInfoProvider.overrideWith((ref) async => packageInfo),
           httpClientProvider.overrideWithValue(client),
         ],
-        child: const MaterialApp(home: ReleaseNotesScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ReleaseNotesScreen(),
+        ),
       ),
     );
 

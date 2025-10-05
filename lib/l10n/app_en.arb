@@ -1,0 +1,75 @@
+{
+  "@@locale": "en",
+  "appTitle": "Habit Tracker",
+  "homeTitle": "Habits",
+  "homeSettingsTooltip": "Settings",
+  "homeAddHabitTooltip": "Add habit",
+  "consentDialogTitle": "Share Anonymous Usage Data?",
+  "consentDialogBody": "Help us improve Habit Tracker by sharing anonymized usage metrics and crash reports. You can change this later in Settings.",
+  "consentNotNow": "Not now",
+  "consentShare": "Share",
+  "settingsTitle": "Settings",
+  "settingsPrivacySection": "Privacy & Data",
+  "settingsAnalyticsToggle": "Share anonymous usage analytics",
+  "settingsAnalyticsSubtitle": "Helps us understand which features are most useful.",
+  "settingsCrashToggle": "Share crash reports",
+  "settingsCrashSubtitle": "Sends anonymized crash logs so we can fix issues faster.",
+  "settingsNotificationsSection": "Notifications",
+  "settingsNotificationsToggle": "Daily reminder notifications",
+  "settingsNotificationsSubtitle": "Receive a helpful nudge to complete today’s habits.",
+  "settingsNotificationTimeTitle": "Reminder time",
+  "settingsNotificationTimeSubtitle": "Currently {time}",
+  "@settingsNotificationTimeSubtitle": {
+    "description": "Subtitle showing the selected reminder time.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAppearanceSection": "Appearance",
+  "settingsThemeLabel": "Theme mode",
+  "settingsThemeLabelSystem": "System default",
+  "settingsThemeLabelLight": "Light",
+  "settingsThemeLabelDark": "Dark",
+  "settingsThemeDescriptionSystem": "Automatically follow device appearance",
+  "settingsThemeDescriptionLight": "Always use a light theme",
+  "settingsThemeDescriptionDark": "Always use a dark theme",
+  "settingsLanguageSection": "Language",
+  "settingsLanguageSystem": "Follow system language",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageFrench": "French",
+  "settingsLanguageDescriptionSystem": "App language follows your device settings.",
+  "settingsLanguageDescription": "App language is set to {language}",
+  "@settingsLanguageDescription": {
+    "description": "Describes the currently selected language.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "htmlThemeLabel": "Content theme",
+  "htmlThemeOptionSystem": "Match app theme",
+  "htmlThemeOptionLight": "Light",
+  "htmlThemeOptionDark": "Dark",
+  "settingsAboutSection": "About",
+  "settingsReleaseNotes": "Release notes",
+  "settingsReleaseNotesSubtitle": "See what changed in each version",
+  "settingsPrivacyPolicy": "Privacy policy",
+  "settingsPrivacyPolicySubtitle": "How we handle your data",
+  "settingsVersionLabel": "v{version}.{build} - version name and build number",
+  "@settingsVersionLabel": {
+    "description": "Displays the version and build number on settings.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "releaseNotesTitle": "Release Notes",
+  "privacyPolicyTitle": "Privacy Policy"
+}
