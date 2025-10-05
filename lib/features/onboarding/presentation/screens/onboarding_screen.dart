@@ -256,7 +256,6 @@ class _NotificationsPage extends ConsumerWidget {
                       ),
                     ),
                   )
-                )
                 : Text(l10n.onboardingEnableReminders),
           ),
         ),
