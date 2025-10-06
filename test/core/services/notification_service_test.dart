@@ -1,6 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 import 'package:habit_tracker/core/services/notification_service.dart';
 
@@ -23,6 +25,22 @@ void main() {
   setUp(() {
     plugin = _MockFlutterLocalNotificationsPlugin();
     service = NotificationService(plugin: plugin);
+  });
+
+  setUpAll(() {
+    tzdata.initializeTimeZones();
+    registerFallbackValue(
+      tz.TZDateTime(tz.UTC, 2024, 1, 1),
+    );
+    registerFallbackValue(const NotificationDetails());
+    registerFallbackValue(
+      UILocalNotificationDateInterpretation.wallClockTime,
+    );
+  });
+
+  tearDown(() {
+    NotificationService.resetInitialization();
+    tz.setLocalLocation(tz.getLocation('UTC'));
   });
 
   test('treats null Android permission result as granted', () async {
@@ -87,5 +105,59 @@ void main() {
     final granted = await service.requestPermission();
 
     expect(granted, isFalse);
+  });
+
+  group('scheduleHabitReminder', () {
+    setUp(() {
+      when(
+        () => plugin.zonedSchedule(
+          any(),
+          any(),
+          any(),
+          any(),
+          any(),
+          androidScheduleMode: any(named: 'androidScheduleMode'),
+          uiLocalNotificationDateInterpretation:
+              any(named: 'uiLocalNotificationDateInterpretation'),
+          matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    test('initializes timezone using provided name', () async {
+      final tzService = NotificationService(
+        plugin: plugin,
+        timeZoneNameProvider: () async => 'America/New_York',
+      );
+
+      await tzService.scheduleHabitReminder(
+        habitId: 'habit',
+        title: 'title',
+        body: 'body',
+        days: const [0],
+        time: '09:00',
+      );
+
+      expect(tz.local.name, 'America/New_York');
+    });
+
+    test('falls back to UTC when timezone lookup fails', () async {
+      final tzService = NotificationService(
+        plugin: plugin,
+        timeZoneNameProvider: () async => 'Invalid/Zone',
+      );
+
+      tz.setLocalLocation(tz.getLocation('America/Los_Angeles'));
+
+      await tzService.scheduleHabitReminder(
+        habitId: 'habit',
+        title: 'title',
+        body: 'body',
+        days: const [0],
+        time: '09:00',
+      );
+
+      expect(tz.local.name, 'UTC');
+    });
   });
 }

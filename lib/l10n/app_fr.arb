@@ -177,5 +177,59 @@
   "habitFormCreateTitle": "Créer une habitude",
   "habitFormEditTitle": "Modifier une habitude",
   "habitFormCreatePlaceholder": "Le formulaire d'habitudes arrivera dans une prochaine mise à jour.",
-  "habitFormEditPlaceholder": "La modification des habitudes sera bientôt disponible."
+  "habitFormEditPlaceholder": "La modification des habitudes sera bientôt disponible.",
+  "habitFormEmojiLabel": "Emoji",
+  "habitFormEmojiPlaceholder": "Touchez pour choisir",
+  "habitFormNameLabel": "Nom de l'habitude",
+  "habitFormNameHelper": "Gardez un intitulé court et orienté action.",
+  "habitFormNameRequiredError": "Saisissez un nom d'au moins 2 caractères.",
+  "habitFormNameLengthError": "Le nom doit contenir entre 2 et 32 caractères.",
+  "habitFormEmojiRequiredError": "Choisissez un emoji pour représenter l'habitude.",
+  "habitFormColorLabel": "Couleur d'accent",
+  "habitFormColorDescription": "Utilisée dans les listes et les rappels.",
+  "habitFormDaysLabel": "Jours de la semaine",
+  "habitFormDaysHelper": "Sélectionnez au moins un jour pour pratiquer cette habitude.",
+  "habitFormDaysError": "Choisissez au moins un jour.",
+  "habitFormReminderLabel": "Rappel quotidien",
+  "habitFormReminderSubtitle": "Activez les notifications pour rester motivé.",
+  "habitFormReminderTimeLabel": "Heure du rappel",
+  "habitFormReminderTimeHelper": "Nous vous rappellerons à cette heure les jours sélectionnés.",
+  "habitFormReminderTimeError": "Sélectionnez une heure de rappel valide.",
+  "habitFormReminderPermissionDenied": "Impossible d'activer les rappels sans autorisation de notification.",
+  "habitFormLimitError": "Vous pouvez suivre jusqu'à trois habitudes simultanément.",
+  "habitFormCreateHabit": "Créer l'habitude",
+  "habitFormSaveChanges": "Enregistrer les modifications",
+  "habitFormDeleteTooltip": "Supprimer l'habitude",
+  "habitFormDeleteConfirmTitle": "Supprimer l'habitude ?",
+  "habitFormDeleteConfirmMessage": "Cela supprimera l'habitude et son historique.",
+  "habitFormDeleteCancel": "Annuler",
+  "habitFormDeleteConfirmAction": "Supprimer",
+  "habitFormDeleteError": "Impossible de supprimer l'habitude. Réessayez.",
+  "habitFormDeleteSuccess": "Habitude supprimée.",
+  "habitFormDiscardTitle": "Annuler les modifications ?",
+  "habitFormDiscardMessage": "Vous avez des modifications non enregistrées. Voulez-vous vraiment quitter ?",
+  "habitFormDiscardCancel": "Continuer",
+  "habitFormDiscardConfirm": "Annuler",
+  "habitFormReminderFallbackName": "votre habitude",
+  "habitFormReminderTitle": "{emoji} {name}",
+  "@habitFormReminderTitle": {
+    "placeholders": {
+      "emoji": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "habitFormReminderBody": "Il est temps de faire {name}.",
+  "@habitFormReminderBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "habitFormCreateSuccess": "Habitude créée avec succès.",
+  "habitFormUpdateSuccess": "Habitude mise à jour avec succès."
 }

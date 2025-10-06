@@ -106,6 +106,131 @@ class AppLocalizationsEn extends AppLocalizations {
   String get habitFormEditPlaceholder => 'Editing habits is coming soon.';
 
   @override
+  String get habitFormEmojiLabel => 'Emoji';
+
+  @override
+  String get habitFormEmojiPlaceholder => 'Tap to choose';
+
+  @override
+  String get habitFormNameLabel => 'Habit name';
+
+  @override
+  String get habitFormNameHelper => 'Keep it short and action-oriented.';
+
+  @override
+  String get habitFormNameRequiredError =>
+      'Enter a name with at least 2 characters.';
+
+  @override
+  String get habitFormNameLengthError =>
+      'Name must be between 2 and 32 characters.';
+
+  @override
+  String get habitFormEmojiRequiredError =>
+      'Select an emoji to represent the habit.';
+
+  @override
+  String get habitFormColorLabel => 'Accent color';
+
+  @override
+  String get habitFormColorDescription => 'Used in lists and reminders.';
+
+  @override
+  String get habitFormDaysLabel => 'Days of the week';
+
+  @override
+  String get habitFormDaysHelper =>
+      'Pick at least one day to practise this habit.';
+
+  @override
+  String get habitFormDaysError => 'Choose at least one day.';
+
+  @override
+  String get habitFormReminderLabel => 'Daily reminder';
+
+  @override
+  String get habitFormReminderSubtitle =>
+      'Enable notifications to stay on track.';
+
+  @override
+  String get habitFormReminderTimeLabel => 'Reminder time';
+
+  @override
+  String get habitFormReminderTimeHelper =>
+      'We\'ll remind you at this time on selected days.';
+
+  @override
+  String get habitFormReminderTimeError => 'Select a valid reminder time.';
+
+  @override
+  String get habitFormReminderPermissionDenied =>
+      'We couldn\'t enable reminders without notification permission.';
+
+  @override
+  String get habitFormLimitError =>
+      'You can only track up to three habits at a time.';
+
+  @override
+  String get habitFormCreateHabit => 'Create habit';
+
+  @override
+  String get habitFormSaveChanges => 'Save changes';
+
+  @override
+  String get habitFormDeleteTooltip => 'Delete habit';
+
+  @override
+  String get habitFormDeleteConfirmTitle => 'Delete habit?';
+
+  @override
+  String get habitFormDeleteConfirmMessage =>
+      'This will remove the habit and its history.';
+
+  @override
+  String get habitFormDeleteCancel => 'Cancel';
+
+  @override
+  String get habitFormDeleteConfirmAction => 'Delete';
+
+  @override
+  String get habitFormDeleteError => 'Couldn\'t delete the habit. Try again.';
+
+  @override
+  String get habitFormDeleteSuccess => 'Habit deleted.';
+
+  @override
+  String get habitFormDiscardTitle => 'Discard changes?';
+
+  @override
+  String get habitFormDiscardMessage =>
+      'You have unsaved changes. Are you sure you want to leave?';
+
+  @override
+  String get habitFormDiscardCancel => 'Keep editing';
+
+  @override
+  String get habitFormDiscardConfirm => 'Discard';
+
+  @override
+  String get habitFormReminderFallbackName => 'your habit';
+
+  @override
+  String habitFormReminderTitle(String emoji, String name) {
+    return '$emoji $name';
+  }
+
+  @override
+  String habitFormReminderBody(String name) {
+    return 'Time to check in on $name.';
+  }
+
+  @override
+  String get habitFormCreateSuccess => 'Habit created successfully.';
+
+  @override
+  String get habitFormUpdateSuccess => 'Habit updated successfully.';
+
+  @override
   String get consentDialogTitle => 'Share Anonymous Usage Data?';
 
   @override

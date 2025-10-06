@@ -19,6 +19,11 @@ class HabitsRepository {
     return _mapHabits(box);
   }
 
+  Future<int> countHabits() async {
+    final box = _database.habitsBox;
+    return box.length;
+  }
+
   Future<List<Habit>> getTodayHabits(DateTime date) async {
     final habits = await fetchHabits();
     final normalized = DateHelpers.startOfDay(date);

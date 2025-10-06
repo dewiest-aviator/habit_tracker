@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:habit_tracker/core/localization/l10n_extensions.dart';
+import 'package:habit_tracker/features/habits/application/habit_form_controller.dart';
 import 'package:habit_tracker/features/habits/application/home_controller.dart';
 import 'package:habit_tracker/features/habits/application/home_state.dart';
 import 'package:habit_tracker/features/habits/presentation/widgets/habit_card.dart';
@@ -42,10 +43,10 @@ class HomeScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: state.canAddHabit
-            ? () {
-                if (state.canAddHabit) {
-                  context.pushNamed('habit_form');
-                }
+            ? () async {
+                final result = await context.pushNamed('habit_form');
+                if (!context.mounted) return;
+                _handleFormResult(context, result);
               }
             : null,
         tooltip: l10n.homeAddHabitTooltip,
@@ -102,13 +103,36 @@ class HomeScreen extends ConsumerWidget {
 
     switch (action) {
       case _HabitAction.edit:
-        context.pushNamed('habit_form', extra: habit.habit.id);
+        final result = await context.pushNamed(
+          'habit_form',
+          extra: habit.habit.id,
+        );
+        if (!context.mounted) return;
+        _handleFormResult(context, result);
         break;
       case _HabitAction.undo:
         if (habit.isCompleted) {
           await _handleToggle(context, ref, habit);
         }
         break;
+    }
+  }
+
+  void _handleFormResult(BuildContext context, Object? result) {
+    final l10n = context.l10n;
+    if (result is HabitFormSaveResult &&
+        result.status == HabitFormSaveStatus.success) {
+      final message = result.isNew
+          ? l10n.habitFormCreateSuccess
+          : l10n.habitFormUpdateSuccess;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    } else if (result is HabitFormDeleteResult &&
+        result.status == HabitFormDeleteStatus.deleted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.habitFormDeleteSuccess)));
     }
   }
 }
