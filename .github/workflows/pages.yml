@@ -25,7 +25,7 @@ jobs:
       # If you need a build step (mkdocs, docusaurus, etc.), do it here.
       # Example for plain static content in docs/ (no build):
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: docs  # or your generated site dir, e.g. 'build' or 'site'
 
