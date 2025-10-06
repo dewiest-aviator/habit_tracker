@@ -1,3 +1,5 @@
+enum AppEnv { dev, staging, prod }
+
 class AppConfig {
   static const flavor = String.fromEnvironment('FLAVOR', defaultValue: 'dev');
   static const contentBaseUrl = String.fromEnvironment(
@@ -5,13 +7,25 @@ class AppConfig {
     defaultValue: 'https://dewiest-aviator.github.io/habit_tracker',
   );
 
-  static bool get isDev => flavor == 'dev';
-  static bool get isStaging => flavor == 'staging';
-  static bool get isProd => flavor == 'prod';
+  static AppEnv get environment {
+    switch (flavor) {
+      case 'prod':
+        return AppEnv.prod;
+      case 'staging':
+        return AppEnv.staging;
+      default:
+        return AppEnv.dev;
+    }
+  }
 
   static String get nameSuffix {
-    if (isProd) return '';
-    if (isStaging) return ' • STG';
-    return ' • DEV';
+    switch (environment) {
+      case AppEnv.prod:
+        return '';
+      case AppEnv.staging:
+        return ' • STG';
+      case AppEnv.dev:
+        return ' • DEV';
+    }
   }
 }

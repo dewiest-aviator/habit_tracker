@@ -10,9 +10,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'firebase_options_dev.dart' as dev;
-import 'firebase_options_staging.dart' as stg;
-import 'firebase_options_prod.dart' as prod;
+import 'package:habit_tracker/core/config/env/selector.dart' as env_selector;
 import 'core/config/app_config.dart';
 import 'core/localization/l10n_extensions.dart';
 import 'core/router/app_router.dart';
@@ -29,12 +27,6 @@ import 'features/settings/application/providers/language_provider.dart';
 import 'features/settings/application/providers/notification_settings_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'l10n/app_localizations.dart';
-
-FirebaseOptions get firebaseOptions {
-  if (AppConfig.isProd) return prod.DefaultFirebaseOptions.currentPlatform;
-  if (AppConfig.isStaging) return stg.DefaultFirebaseOptions.currentPlatform;
-  return dev.DefaultFirebaseOptions.currentPlatform;
-}
 
 // Gate Firebase/Crashlytics behind a compile-time flag.
 // Locally (default) this is false. In CI PR builds, pass:
@@ -54,7 +46,7 @@ Future<void> main() async {
   await database.initialize();
   if (enableFirebase) {
     try {
-      await Firebase.initializeApp(options: firebaseOptions);
+      await Firebase.initializeApp(options: env_selector.firebaseOptionsFor());
     } catch (e, st) {
       debugPrint('Firebase init skipped/failed: $e');
       debugPrintStack(stackTrace: st);
