@@ -181,10 +181,8 @@ class _HabitSelectionPage extends ConsumerWidget {
                     template: template,
                     label: template.label(l10n),
                     selected: state.selectedHabits.containsKey(template.id),
-                    onTap: () => controller.toggleHabit(
-                      template,
-                      template.label(l10n),
-                    ),
+                    onTap: () =>
+                        controller.toggleHabit(template, template.label(l10n)),
                   ),
               ],
             ),
@@ -372,10 +370,7 @@ class _StarterHabitCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                template.emoji,
-                style: const TextStyle(fontSize: 40),
-              ),
+              Text(template.emoji, style: const TextStyle(fontSize: 40)),
               const SizedBox(height: 12),
               Text(
                 label,
@@ -400,10 +395,7 @@ class _StarterHabitCard extends StatelessWidget {
 }
 
 class _ProgressDots extends StatelessWidget {
-  const _ProgressDots({
-    required this.currentIndex,
-    required this.total,
-  });
+  const _ProgressDots({required this.currentIndex, required this.total});
 
   final int currentIndex;
   final int total;

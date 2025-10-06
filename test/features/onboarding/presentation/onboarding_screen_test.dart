@@ -257,7 +257,9 @@ void main() {
     verify(() => habitsRepository.saveHabit(any())).called(1);
   });
 
-  testWidgets('skip jumps to reminders step with finish enabled', (tester) async {
+  testWidgets('skip jumps to reminders step with finish enabled', (
+    tester,
+  ) async {
     final router = GoRouter(
       routes: [
         GoRoute(

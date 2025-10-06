@@ -148,9 +148,11 @@ class HabitTrackerApp extends ConsumerWidget {
     final locale = ref.watch(languageControllerProvider).locale;
 
     final baseTitle =
-        Localizations.of<AppLocalizations>(context, AppLocalizations)
-                ?.appTitle ??
-            'Habit Tracker';
+        Localizations.of<AppLocalizations>(
+          context,
+          AppLocalizations,
+        )?.appTitle ??
+        'Habit Tracker';
     final effectiveTitle = '$baseTitle${AppConfig.nameSuffix}';
 
     return MaterialApp.router(

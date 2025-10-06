@@ -35,34 +35,10 @@ class StarterHabitTemplate {
 }
 
 const starterHabitTemplates = <StarterHabitTemplate>[
-  StarterHabitTemplate(
-    id: 'meditate',
-    emoji: '🧘',
-    color: 0xFF7C83FD,
-  ),
-  StarterHabitTemplate(
-    id: 'walk',
-    emoji: '🚶',
-    color: 0xFF00B894,
-  ),
-  StarterHabitTemplate(
-    id: 'hydrate',
-    emoji: '💧',
-    color: 0xFF40C4FF,
-  ),
-  StarterHabitTemplate(
-    id: 'journal',
-    emoji: '📓',
-    color: 0xFFFFB347,
-  ),
-  StarterHabitTemplate(
-    id: 'stretch',
-    emoji: '🤸',
-    color: 0xFFF06292,
-  ),
-  StarterHabitTemplate(
-    id: 'read',
-    emoji: '📚',
-    color: 0xFF6C5CE7,
-  ),
+  StarterHabitTemplate(id: 'meditate', emoji: '🧘', color: 0xFF7C83FD),
+  StarterHabitTemplate(id: 'walk', emoji: '🚶', color: 0xFF00B894),
+  StarterHabitTemplate(id: 'hydrate', emoji: '💧', color: 0xFF40C4FF),
+  StarterHabitTemplate(id: 'journal', emoji: '📓', color: 0xFFFFB347),
+  StarterHabitTemplate(id: 'stretch', emoji: '🤸', color: 0xFFF06292),
+  StarterHabitTemplate(id: 'read', emoji: '📚', color: 0xFF6C5CE7),
 ];

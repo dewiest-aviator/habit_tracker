@@ -75,20 +75,14 @@ class _PrivacyPolicyScreenState extends ConsumerState<PrivacyPolicyScreen> {
             ),
           ),
         ),
-        data: (body) => _HtmlContent(
-          content: body,
-          preference: _preference,
-        ),
+        data: (body) => _HtmlContent(content: body, preference: _preference),
       ),
     );
   }
 }
 
 class _HtmlContent extends StatelessWidget {
-  const _HtmlContent({
-    required this.content,
-    required this.preference,
-  });
+  const _HtmlContent({required this.content, required this.preference});
 
   final String content;
   final HtmlThemePreference preference;
@@ -116,10 +110,7 @@ class _HtmlContent extends StatelessWidget {
                   color: scheme.surface,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: Html(
-                      data: content,
-                      style: styles,
-                    ),
+                    child: Html(data: content, style: styles),
                   ),
                 ),
               ),

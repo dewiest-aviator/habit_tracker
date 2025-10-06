@@ -15,11 +15,11 @@ class OnboardingController extends StateNotifier<OnboardingState> {
     required NotificationService notificationService,
     required NotificationSettingsController notificationSettings,
     SharedPreferences? preferences,
-  })  : _habitsRepository = habitsRepository,
-        _notificationService = notificationService,
-        _notificationSettings = notificationSettings,
-        _providedPrefs = preferences,
-        super(const OnboardingState());
+  }) : _habitsRepository = habitsRepository,
+       _notificationService = notificationService,
+       _notificationSettings = notificationSettings,
+       _providedPrefs = preferences,
+       super(const OnboardingState());
 
   static const hasOnboardedKey = 'has_onboarded';
 
@@ -103,10 +103,7 @@ class OnboardingController extends StateNotifier<OnboardingState> {
       state = state.copyWith(isSaving: false);
       return true;
     } catch (error) {
-      state = state.copyWith(
-        isSaving: false,
-        errorMessage: error.toString(),
-      );
+      state = state.copyWith(isSaving: false, errorMessage: error.toString());
       return false;
     }
   }
@@ -142,13 +139,13 @@ class OnboardingController extends StateNotifier<OnboardingState> {
 
 final onboardingControllerProvider =
     StateNotifierProvider<OnboardingController, OnboardingState>((ref) {
-  final habitsRepository = ref.watch(habitsRepositoryProvider);
-  final notificationService = ref.watch(notificationServiceProvider);
-  final notificationSettings = ref.watch(notificationSettingsProvider);
+      final habitsRepository = ref.watch(habitsRepositoryProvider);
+      final notificationService = ref.watch(notificationServiceProvider);
+      final notificationSettings = ref.watch(notificationSettingsProvider);
 
-  return OnboardingController(
-    habitsRepository: habitsRepository,
-    notificationService: notificationService,
-    notificationSettings: notificationSettings,
-  );
-});
+      return OnboardingController(
+        habitsRepository: habitsRepository,
+        notificationService: notificationService,
+        notificationSettings: notificationSettings,
+      );
+    });

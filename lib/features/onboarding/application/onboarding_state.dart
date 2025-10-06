@@ -39,7 +39,7 @@ class OnboardingState {
       errorMessage: errorMessage,
       permissionStatus: permissionStatus ?? this.permissionStatus,
       isRequestingPermission:
-      isRequestingPermission ?? this.isRequestingPermission,
+          isRequestingPermission ?? this.isRequestingPermission,
     );
   }
 
@@ -57,14 +57,17 @@ class OnboardingState {
 
   @override
   int get hashCode => Object.hash(
-        pageIndex,
-        Object.hashAll(selectedHabits.entries
-            .map((entry) => Object.hash(entry.key, entry.value))),
-        isSaving,
-        errorMessage,
-        permissionStatus,
-        isRequestingPermission,
-      );
+    pageIndex,
+    Object.hashAll(
+      selectedHabits.entries.map(
+        (entry) => Object.hash(entry.key, entry.value),
+      ),
+    ),
+    isSaving,
+    errorMessage,
+    permissionStatus,
+    isRequestingPermission,
+  );
 }
 
 bool _mapEquals(Map<String, String> a, Map<String, String> b) {

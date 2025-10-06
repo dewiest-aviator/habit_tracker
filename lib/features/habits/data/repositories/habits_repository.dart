@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../core/database/habit_database.dart';
+import '../../../../core/utils/date_helpers.dart';
 import '../../domain/domain.dart';
 import '../models/habit_record.dart';
 
@@ -11,10 +12,17 @@ class HabitsRepository {
   HabitsRepository(this._database);
 
   final HabitDatabase _database;
+  static const int maxHabitsPerDay = 3;
 
   Future<List<Habit>> fetchHabits() async {
     final box = _database.habitsBox;
     return _mapHabits(box);
+  }
+
+  Future<List<Habit>> getTodayHabits(DateTime date) async {
+    final habits = await fetchHabits();
+    final normalized = DateHelpers.startOfDay(date);
+    return _filterHabitsForDate(habits, normalized);
   }
 
   Future<Habit?> findById(String id) async {
@@ -59,10 +67,33 @@ class HabitsRepository {
     return controller.stream;
   }
 
+  Stream<List<Habit>> watchTodayHabits(DateTime date) {
+    final normalizedDate = DateHelpers.startOfDay(date);
+    return watchHabits().map(
+      (habits) => _filterHabitsForDate(habits, normalizedDate),
+    );
+  }
+
   List<Habit> _mapHabits(Box<HabitRecord> box) {
     return List<Habit>.unmodifiable(
       box.values.map((record) => record.toHabit()),
     );
+  }
+
+  List<Habit> _filterHabitsForDate(List<Habit> habits, DateTime date) {
+    final dayIndex = DateHelpers.weekdayIndex(date);
+    final filtered = habits
+        .where((habit) {
+          if (habit.days.isEmpty) {
+            return true;
+          }
+          return habit.days.contains(dayIndex);
+        })
+        .toList(growable: false);
+    if (filtered.length <= maxHabitsPerDay) {
+      return filtered;
+    }
+    return filtered.take(maxHabitsPerDay).toList(growable: false);
   }
 }
 

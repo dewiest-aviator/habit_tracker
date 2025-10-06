@@ -165,6 +165,9 @@ void main() {
   testWidgets('notification settings toggle and time row respond', (
     WidgetTester tester,
   ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -195,6 +198,7 @@ void main() {
     expect(timeTile, findsOneWidget);
     expect(notificationController.enabled, isFalse);
 
+    await tester.ensureVisible(notificationsSwitch);
     await tester.tap(notificationsSwitch);
     await tester.pumpAndSettle();
 
@@ -206,7 +210,9 @@ void main() {
     expect(listTile.enabled, isTrue);
   });
 
-  testWidgets('changing language updates controller', (WidgetTester tester) async {
+  testWidgets('changing language updates controller', (
+    WidgetTester tester,
+  ) async {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.binding.setSurfaceSize(const Size(800, 1600));
 
@@ -242,7 +248,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(languageController.locale?.languageCode, 'en');
 
-    dropdownWidget = tester.widget<DropdownButtonFormField<String>>(dropdownFinder);
+    dropdownWidget = tester.widget<DropdownButtonFormField<String>>(
+      dropdownFinder,
+    );
     dropdownWidget.onChanged?.call('system');
     await tester.pumpAndSettle();
     expect(languageController.locale, isNull);

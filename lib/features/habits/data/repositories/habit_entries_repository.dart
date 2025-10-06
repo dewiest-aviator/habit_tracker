@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../core/database/habit_database.dart';
+import '../../../../core/utils/date_helpers.dart';
 import '../../domain/domain.dart';
 import '../models/habit_entry_record.dart';
 
@@ -21,6 +22,14 @@ class HabitEntriesRepository {
   Future<List<HabitEntry>> fetchEntries({String? habitId}) async {
     final box = _database.habitEntriesBox;
     return _mapEntries(box, habitId: habitId);
+  }
+
+  Future<List<HabitEntry>> fetchEntriesForDate(DateTime date) async {
+    final entries = await fetchEntries();
+    final normalized = DateHelpers.startOfDay(date);
+    return entries
+        .where((entry) => DateHelpers.isSameDay(entry.date, normalized))
+        .toList(growable: false);
   }
 
   Future<void> saveEntry(HabitEntry entry) async {
@@ -67,6 +76,15 @@ class HabitEntriesRepository {
     );
 
     return controller.stream;
+  }
+
+  Stream<List<HabitEntry>> watchEntriesForDate(DateTime date) {
+    final normalized = DateHelpers.startOfDay(date);
+    return watchEntries().map(
+      (entries) => entries
+          .where((entry) => DateHelpers.isSameDay(entry.date, normalized))
+          .toList(growable: false),
+    );
   }
 
   List<HabitEntry> _mapEntries(Box<HabitEntryRecord> box, {String? habitId}) {

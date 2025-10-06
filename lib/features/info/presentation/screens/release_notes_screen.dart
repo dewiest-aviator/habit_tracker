@@ -11,8 +11,7 @@ class ReleaseNotesScreen extends ConsumerStatefulWidget {
   const ReleaseNotesScreen({super.key});
 
   @override
-  ConsumerState<ReleaseNotesScreen> createState() =>
-      _ReleaseNotesScreenState();
+  ConsumerState<ReleaseNotesScreen> createState() => _ReleaseNotesScreenState();
 }
 
 class _ReleaseNotesScreenState extends ConsumerState<ReleaseNotesScreen> {
@@ -79,10 +78,8 @@ class _ReleaseNotesScreenState extends ConsumerState<ReleaseNotesScreen> {
             loading: () => const _CenteredProgress(),
             error: (error, _) =>
                 _ErrorContent(message: 'Failed to load release notes: $error'),
-            data: (content) => _ContentView(
-              content: content,
-              preference: _preference,
-            ),
+            data: (content) =>
+                _ContentView(content: content, preference: _preference),
           );
         },
       ),
@@ -91,10 +88,7 @@ class _ReleaseNotesScreenState extends ConsumerState<ReleaseNotesScreen> {
 }
 
 class _ContentView extends StatelessWidget {
-  const _ContentView({
-    required this.content,
-    required this.preference,
-  });
+  const _ContentView({required this.content, required this.preference});
 
   final String content;
   final HtmlThemePreference preference;
@@ -121,10 +115,7 @@ class _ContentView extends StatelessWidget {
                   color: scheme.surface,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: Html(
-                      data: content,
-                      style: styles,
-                    ),
+                    child: Html(data: content, style: styles),
                   ),
                 ),
               ),

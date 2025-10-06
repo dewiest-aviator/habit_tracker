@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:habit_tracker/core/localization/l10n_extensions.dart';
+import 'package:habit_tracker/core/router/widgets/app_nav_bar.dart';
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
 import 'package:habit_tracker/features/info/application/providers/app_info_provider.dart';
 import 'package:habit_tracker/features/info/presentation/screens/privacy_policy_screen.dart';
@@ -151,8 +152,9 @@ class SettingsScreen extends ConsumerWidget {
                   leading: const Icon(Icons.access_time),
                   title: Text(context.l10n.settingsNotificationTimeTitle),
                   subtitle: Text(
-                    context.l10n
-                        .settingsNotificationTimeSubtitle(formattedReminderTime),
+                    context.l10n.settingsNotificationTimeSubtitle(
+                      formattedReminderTime,
+                    ),
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: (!notificationsLoaded || !notificationsEnabled)
@@ -267,6 +269,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+      bottomNavigationBar: const AppNavBar(currentIndex: 2),
     );
   }
 }

@@ -48,8 +48,9 @@ void main() {
 
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
     when(() => notificationSettings.setEnabled(any())).thenAnswer((_) async {});
-    when(() => notificationService.requestPermission())
-        .thenAnswer((_) async => true);
+    when(
+      () => notificationService.requestPermission(),
+    ).thenAnswer((_) async => true);
   });
 
   OnboardingController buildController() {
@@ -70,10 +71,7 @@ void main() {
     controller.toggleHabit(starterHabitTemplates[3], 'Journal');
 
     expect(controller.state.selectedHabits.length, 3);
-    expect(
-      controller.state.selectedHabits.containsKey('journal'),
-      isFalse,
-    );
+    expect(controller.state.selectedHabits.containsKey('journal'), isFalse);
   });
 
   test('persists selected habits and sets onboarding flag', () async {
@@ -85,10 +83,7 @@ void main() {
 
     expect(result, isTrue);
     verify(() => habitsRepository.saveHabit(any())).called(2);
-    expect(
-      prefs.getBool(OnboardingController.hasOnboardedKey),
-      isTrue,
-    );
+    expect(prefs.getBool(OnboardingController.hasOnboardedKey), isTrue);
   });
 
   test('updates permission status when enabling reminders', () async {
@@ -105,8 +100,9 @@ void main() {
   });
 
   test('handles platform denial when enabling reminders', () async {
-    when(() => notificationService.requestPermission())
-        .thenAnswer((_) async => false);
+    when(
+      () => notificationService.requestPermission(),
+    ).thenAnswer((_) async => false);
     final controller = buildController();
 
     await controller.enableNotifications();
@@ -144,4 +140,3 @@ void main() {
     verify(() => notificationSettings.setEnabled(false)).called(1);
   });
 }
-

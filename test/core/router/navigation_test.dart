@@ -8,6 +8,10 @@ import 'package:habit_tracker/core/services/analytics_service.dart';
 import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
 import 'package:habit_tracker/core/theme/app_theme.dart';
+import 'package:habit_tracker/features/habits/data/repositories/habit_entries_repository.dart';
+import 'package:habit_tracker/features/habits/data/repositories/habits_repository.dart';
+import 'package:habit_tracker/features/habits/domain/domain.dart';
+import 'package:habit_tracker/features/habits/domain/usecases/toggle_habit_completion.dart';
 import 'package:habit_tracker/features/info/application/providers/app_info_provider.dart';
 import 'package:habit_tracker/features/settings/application/controllers/notification_settings_controller.dart';
 import 'package:habit_tracker/features/settings/application/controllers/theme_controller.dart';
@@ -25,6 +29,14 @@ class _MockAnalytics extends Mock implements FirebaseAnalytics {}
 
 class _MockCrashlytics extends Mock implements FirebaseCrashlytics {}
 
+class _MockHabitsRepository extends Mock implements HabitsRepository {}
+
+class _MockHabitEntriesRepository extends Mock
+    implements HabitEntriesRepository {}
+
+class _MockToggleHabitCompletion extends Mock
+    implements ToggleHabitCompletion {}
+
 void main() {
   late TelemetryController controller;
   late _MockAnalytics analytics;
@@ -33,6 +45,14 @@ void main() {
   late NotificationSettingsController notificationController;
   late LanguageController languageController;
   late PackageInfo packageInfo;
+  late _MockHabitsRepository habitsRepository;
+  late _MockHabitEntriesRepository habitEntriesRepository;
+  late _MockToggleHabitCompletion toggleHabitCompletion;
+  late Habit sampleHabit;
+
+  setUpAll(() {
+    registerFallbackValue(DateTime(2024));
+  });
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({
@@ -90,6 +110,47 @@ void main() {
       buildSignature: 'sig',
       installerStore: null,
     );
+
+    habitsRepository = _MockHabitsRepository();
+    habitEntriesRepository = _MockHabitEntriesRepository();
+    toggleHabitCompletion = _MockToggleHabitCompletion();
+
+    sampleHabit = Habit(
+      id: 'habit-1',
+      name: 'Hydrate',
+      emoji: '💧',
+      color: 0xFF42A5F5,
+      days: List<int>.generate(7, (index) => index),
+      reminderId: 'reminder-1',
+      reminderTime: '08:00',
+      bestStreak: 3,
+      currentStreak: 1,
+    );
+
+    when(
+      () => habitsRepository.getTodayHabits(any()),
+    ).thenAnswer((_) async => [sampleHabit]);
+    when(
+      () => habitsRepository.watchTodayHabits(any()),
+    ).thenAnswer((_) => Stream.value([sampleHabit]));
+    when(
+      () => habitEntriesRepository.fetchEntriesForDate(any()),
+    ).thenAnswer((_) async => <HabitEntry>[]);
+    when(
+      () => habitEntriesRepository.watchEntriesForDate(any()),
+    ).thenAnswer((_) => Stream.value(<HabitEntry>[]));
+    when(
+      () => toggleHabitCompletion.call(
+        habitId: any(named: 'habitId'),
+        date: any(named: 'date'),
+      ),
+    ).thenAnswer((invocation) async {
+      final date = invocation.namedArguments[#date] as DateTime;
+      return ToggleHabitResult(
+        habit: sampleHabit,
+        entry: HabitEntry(habitId: sampleHabit.id, date: date, done: true),
+      );
+    });
   });
 
   testWidgets('navigates from Home to Settings', (WidgetTester tester) async {
@@ -110,6 +171,13 @@ void main() {
             (ref) => notificationController,
           ),
           appInfoProvider.overrideWith((ref) async => packageInfo),
+          habitsRepositoryProvider.overrideWithValue(habitsRepository),
+          habitEntriesRepositoryProvider.overrideWithValue(
+            habitEntriesRepository,
+          ),
+          toggleHabitCompletionProvider.overrideWithValue(
+            toggleHabitCompletion,
+          ),
         ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
@@ -123,17 +191,27 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    expect(find.text(l10n.homeTitle), findsOneWidget);
+    expect(find.text(l10n.homeTodayTitle), findsOneWidget);
 
-    final settingsButton = find.byKey(const Key('btn_settings'));
-    expect(settingsButton, findsOneWidget);
-    await tester.tap(settingsButton);
+    final settingsNav = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text(l10n.navSettingsLabel),
+    );
+    expect(settingsNav, findsOneWidget);
+    await tester.tap(settingsNav);
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    final settingsTitleFinder = find.descendant(
+      of: find.byType(AppBar),
+      matching: find.text(l10n.settingsTitle),
+    );
+    expect(settingsTitleFinder, findsOneWidget);
 
-    final backButton = find.byTooltip('Back');
-    await tester.tap(backButton);
+    final homeNav = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text(l10n.navHomeLabel),
+    );
+    await tester.tap(homeNav);
     await tester.pumpAndSettle();
 
     final fab = find.byType(FloatingActionButton);
@@ -158,6 +236,13 @@ void main() {
           themeControllerProvider.overrideWith((ref) => themeController),
           languageControllerProvider.overrideWith((ref) => languageController),
           appInfoProvider.overrideWith((ref) async => packageInfo),
+          habitsRepositoryProvider.overrideWithValue(habitsRepository),
+          habitEntriesRepositoryProvider.overrideWithValue(
+            habitEntriesRepository,
+          ),
+          toggleHabitCompletionProvider.overrideWithValue(
+            toggleHabitCompletion,
+          ),
         ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
