@@ -24,7 +24,8 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   flutter_local_notifications: ^17.2.1
-  flutter_native_timezone: ^2.0.0
+  flutter_native_timezone:
+    path: packages/flutter_native_timezone
   flutter_localizations:
     sdk: flutter
   flutter_html: ^3.0.0-beta.2
