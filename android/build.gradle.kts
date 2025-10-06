@@ -1,6 +1,7 @@
 import com.android.build.gradle.LibraryExtension
 import org.gradle.api.file.Directory
 import org.gradle.kotlin.dsl.configure
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 allprojects {
     repositories {
@@ -28,6 +29,12 @@ subprojects {
         plugins.withId("com.android.library") {
             extensions.configure<LibraryExtension>("android") {
                 namespace = "com.whelksoft.flutter_native_timezone"
+            }
+        }
+
+        tasks.withType<KotlinCompile>().configureEach {
+            kotlinOptions {
+                jvmTarget = org.jetbrains.kotlin.config.JvmTarget.JVM_1_8.description
             }
         }
     }
