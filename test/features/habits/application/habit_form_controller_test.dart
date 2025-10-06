@@ -234,25 +234,17 @@ void main() {
     final result = await controller.submit(reminderStrings: reminderStrings());
 
     expect(result.status, HabitFormSaveStatus.success);
-    verifyInOrder([
+    final results = verifyInOrder([
       () => notificationService.cancelHabitReminder('reminder-1'),
       () => notificationService.scheduleHabitReminder(
             habitId: 'reminder-1',
             title: any(named: 'title'),
             body: any(named: 'body'),
-            days: any(named: 'days'),
-            time: any(named: 'time'),
+            days: captureAny(named: 'days'),
+            time: captureAny(named: 'time'),
           ),
     ]);
-    final captured = verify(
-      () => notificationService.scheduleHabitReminder(
-        habitId: 'reminder-1',
-        title: any(named: 'title'),
-        body: any(named: 'body'),
-        days: captureAny(named: 'days'),
-        time: captureAny(named: 'time'),
-      ),
-    ).captured;
+    final captured = results.last.captured;
     expect(captured[0] as List<int>, equals(const [0, 1]));
     expect(captured[1] as String, equals('08:00'));
   });

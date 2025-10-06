@@ -33,6 +33,9 @@ void main() {
       tz.TZDateTime(tz.UTC, 2024, 1, 1),
     );
     registerFallbackValue(const NotificationDetails());
+    registerFallbackValue(
+      UILocalNotificationDateInterpretation.wallClockTime,
+    );
   });
 
   tearDown(() {

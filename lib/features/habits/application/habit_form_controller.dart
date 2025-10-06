@@ -422,8 +422,8 @@ class HabitFormController extends StateNotifier<HabitFormState> {
   }
 
   Future<Habit> _persistHabit() async {
-    final reminderId = _habitId ?? _loadedHabit?.reminderId;
     final id = _habitId ?? _loadedHabit?.id ?? _generateHabitId();
+    final reminderId = _loadedHabit?.reminderId;
     final existing = _loadedHabit;
     final habit = Habit(
       id: id,
