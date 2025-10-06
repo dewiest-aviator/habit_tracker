@@ -260,6 +260,228 @@ abstract class AppLocalizations {
   /// **'Editing habits is coming soon.'**
   String get habitFormEditPlaceholder;
 
+  /// No description provided for @habitFormEmojiLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji'**
+  String get habitFormEmojiLabel;
+
+  /// No description provided for @habitFormEmojiPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to choose'**
+  String get habitFormEmojiPlaceholder;
+
+  /// No description provided for @habitFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit name'**
+  String get habitFormNameLabel;
+
+  /// No description provided for @habitFormNameHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it short and action-oriented.'**
+  String get habitFormNameHelper;
+
+  /// No description provided for @habitFormNameRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name with at least 2 characters.'**
+  String get habitFormNameRequiredError;
+
+  /// No description provided for @habitFormNameLengthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Name must be between 2 and 32 characters.'**
+  String get habitFormNameLengthError;
+
+  /// No description provided for @habitFormEmojiRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an emoji to represent the habit.'**
+  String get habitFormEmojiRequiredError;
+
+  /// No description provided for @habitFormColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent color'**
+  String get habitFormColorLabel;
+
+  /// No description provided for @habitFormColorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Used in lists and reminders.'**
+  String get habitFormColorDescription;
+
+  /// No description provided for @habitFormDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days of the week'**
+  String get habitFormDaysLabel;
+
+  /// No description provided for @habitFormDaysHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one day to practise this habit.'**
+  String get habitFormDaysHelper;
+
+  /// No description provided for @habitFormDaysError.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose at least one day.'**
+  String get habitFormDaysError;
+
+  /// No description provided for @habitFormReminderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reminder'**
+  String get habitFormReminderLabel;
+
+  /// No description provided for @habitFormReminderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable notifications to stay on track.'**
+  String get habitFormReminderSubtitle;
+
+  /// No description provided for @habitFormReminderTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder time'**
+  String get habitFormReminderTimeLabel;
+
+  /// No description provided for @habitFormReminderTimeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll remind you at this time on selected days.'**
+  String get habitFormReminderTimeHelper;
+
+  /// No description provided for @habitFormReminderTimeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a valid reminder time.'**
+  String get habitFormReminderTimeError;
+
+  /// No description provided for @habitFormReminderPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t enable reminders without notification permission.'**
+  String get habitFormReminderPermissionDenied;
+
+  /// No description provided for @habitFormLimitError.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only track up to three habits at a time.'**
+  String get habitFormLimitError;
+
+  /// No description provided for @habitFormCreateHabit.
+  ///
+  /// In en, this message translates to:
+  /// **'Create habit'**
+  String get habitFormCreateHabit;
+
+  /// No description provided for @habitFormSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get habitFormSaveChanges;
+
+  /// No description provided for @habitFormDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete habit'**
+  String get habitFormDeleteTooltip;
+
+  /// No description provided for @habitFormDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete habit?'**
+  String get habitFormDeleteConfirmTitle;
+
+  /// No description provided for @habitFormDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will remove the habit and its history.'**
+  String get habitFormDeleteConfirmMessage;
+
+  /// No description provided for @habitFormDeleteCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get habitFormDeleteCancel;
+
+  /// No description provided for @habitFormDeleteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get habitFormDeleteConfirmAction;
+
+  /// No description provided for @habitFormDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the habit. Try again.'**
+  String get habitFormDeleteError;
+
+  /// No description provided for @habitFormDeleteSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit deleted.'**
+  String get habitFormDeleteSuccess;
+
+  /// No description provided for @habitFormDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get habitFormDiscardTitle;
+
+  /// No description provided for @habitFormDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Are you sure you want to leave?'**
+  String get habitFormDiscardMessage;
+
+  /// No description provided for @habitFormDiscardCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get habitFormDiscardCancel;
+
+  /// No description provided for @habitFormDiscardConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get habitFormDiscardConfirm;
+
+  /// No description provided for @habitFormReminderFallbackName.
+  ///
+  /// In en, this message translates to:
+  /// **'your habit'**
+  String get habitFormReminderFallbackName;
+
+  /// No description provided for @habitFormReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{emoji} {name}'**
+  String habitFormReminderTitle(String emoji, String name);
+
+  /// No description provided for @habitFormReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to check in on {name}.'**
+  String habitFormReminderBody(String name);
+
+  /// No description provided for @habitFormCreateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit created successfully.'**
+  String get habitFormCreateSuccess;
+
+  /// No description provided for @habitFormUpdateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit updated successfully.'**
+  String get habitFormUpdateSuccess;
+
   /// No description provided for @consentDialogTitle.
   ///
   /// In en, this message translates to:

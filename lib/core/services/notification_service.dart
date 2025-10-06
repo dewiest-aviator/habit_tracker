@@ -1,11 +1,15 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   NotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
+  static bool _timeZonesInitialized = false;
 
   FlutterLocalNotificationsPlugin get plugin => _plugin;
 
@@ -51,6 +55,99 @@ class NotificationService {
     }
 
     return granted;
+  }
+
+  Future<void> scheduleHabitReminder({
+    required String habitId,
+    required String title,
+    required String body,
+    required List<int> days,
+    required String time,
+  }) async {
+    final reminderTime = _parseTimeOfDay(time);
+    if (reminderTime == null || days.isEmpty) {
+      return;
+    }
+    await _ensureTimeZonesInitialized();
+
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'habit_reminders',
+        'Habit reminders',
+        channelDescription: 'Daily habit reminder notifications.',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: const DarwinNotificationDetails(),
+      macOS: const DarwinNotificationDetails(),
+    );
+
+    for (final day in days) {
+      final scheduleDate = _nextInstanceForDay(day, reminderTime);
+      await _plugin.zonedSchedule(
+        _notificationIdForHabit(habitId, day),
+        title,
+        body,
+        scheduleDate,
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.wallClockTime,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      );
+    }
+  }
+
+  Future<void> cancelHabitReminder(String habitId) async {
+    for (var day = 0; day < 7; day += 1) {
+      await _plugin.cancel(_notificationIdForHabit(habitId, day));
+    }
+  }
+
+  Future<void> _ensureTimeZonesInitialized() async {
+    if (_timeZonesInitialized) return;
+    tz.initializeTimeZones();
+    _timeZonesInitialized = true;
+  }
+
+  int _notificationIdForHabit(String habitId, int dayIndex) {
+    final base = habitId.hashCode & 0x7FFFFFFF;
+    return base ^ dayIndex;
+  }
+
+  TimeOfDay? _parseTimeOfDay(String value) {
+    final parts = value.split(':');
+    if (parts.length != 2) {
+      return null;
+    }
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) {
+      return null;
+    }
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return null;
+    }
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  tz.TZDateTime _nextInstanceForDay(int dayIndex, TimeOfDay time) {
+    final now = tz.TZDateTime.now(tz.local);
+    final targetWeekday = dayIndex < 6 ? dayIndex + 1 : DateTime.sunday;
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      time.hour,
+      time.minute,
+    );
+    var delta = (targetWeekday - now.weekday) % 7;
+    scheduled = scheduled.add(Duration(days: delta));
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 7));
+    }
+    return scheduled;
   }
 }
 

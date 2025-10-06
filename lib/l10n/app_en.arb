@@ -80,6 +80,60 @@
   "habitFormEditTitle": "Edit habit",
   "habitFormCreatePlaceholder": "The habit form will live here in a future update.",
   "habitFormEditPlaceholder": "Editing habits is coming soon.",
+  "habitFormEmojiLabel": "Emoji",
+  "habitFormEmojiPlaceholder": "Tap to choose",
+  "habitFormNameLabel": "Habit name",
+  "habitFormNameHelper": "Keep it short and action-oriented.",
+  "habitFormNameRequiredError": "Enter a name with at least 2 characters.",
+  "habitFormNameLengthError": "Name must be between 2 and 32 characters.",
+  "habitFormEmojiRequiredError": "Select an emoji to represent the habit.",
+  "habitFormColorLabel": "Accent color",
+  "habitFormColorDescription": "Used in lists and reminders.",
+  "habitFormDaysLabel": "Days of the week",
+  "habitFormDaysHelper": "Pick at least one day to practise this habit.",
+  "habitFormDaysError": "Choose at least one day.",
+  "habitFormReminderLabel": "Daily reminder",
+  "habitFormReminderSubtitle": "Enable notifications to stay on track.",
+  "habitFormReminderTimeLabel": "Reminder time",
+  "habitFormReminderTimeHelper": "We'll remind you at this time on selected days.",
+  "habitFormReminderTimeError": "Select a valid reminder time.",
+  "habitFormReminderPermissionDenied": "We couldn't enable reminders without notification permission.",
+  "habitFormLimitError": "You can only track up to three habits at a time.",
+  "habitFormCreateHabit": "Create habit",
+  "habitFormSaveChanges": "Save changes",
+  "habitFormDeleteTooltip": "Delete habit",
+  "habitFormDeleteConfirmTitle": "Delete habit?",
+  "habitFormDeleteConfirmMessage": "This will remove the habit and its history.",
+  "habitFormDeleteCancel": "Cancel",
+  "habitFormDeleteConfirmAction": "Delete",
+  "habitFormDeleteError": "Couldn't delete the habit. Try again.",
+  "habitFormDeleteSuccess": "Habit deleted.",
+  "habitFormDiscardTitle": "Discard changes?",
+  "habitFormDiscardMessage": "You have unsaved changes. Are you sure you want to leave?",
+  "habitFormDiscardCancel": "Keep editing",
+  "habitFormDiscardConfirm": "Discard",
+  "habitFormReminderFallbackName": "your habit",
+  "habitFormReminderTitle": "{emoji} {name}",
+  "@habitFormReminderTitle": {
+    "placeholders": {
+      "emoji": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "habitFormReminderBody": "Time to check in on {name}.",
+  "@habitFormReminderBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "habitFormCreateSuccess": "Habit created successfully.",
+  "habitFormUpdateSuccess": "Habit updated successfully.",
   "consentDialogTitle": "Share Anonymous Usage Data?",
   "consentDialogBody": "Help us improve Habit Tracker by sharing anonymized usage metrics and crash reports. You can change this later in Settings.",
   "consentNotNow": "Not now",
