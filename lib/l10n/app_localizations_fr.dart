@@ -15,10 +15,97 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeTitle => 'Habitudes';
 
   @override
+  String get homeTodayTitle => 'Aujourd\'hui';
+
+  @override
+  String get homeTodayHeadline => 'Habitudes du jour';
+
+  @override
   String get homeSettingsTooltip => 'Paramètres';
 
   @override
   String get homeAddHabitTooltip => 'Ajouter une habitude';
+
+  @override
+  String homeProgressSummary(int completed, int total) {
+    return 'Vous avez terminé $completed sur $total habitudes aujourd\'hui';
+  }
+
+  @override
+  String get homeEmptyTitle => 'Ajoutez votre première habitude';
+
+  @override
+  String get homeEmptySubtitle =>
+      'Commencez en créant jusqu\'à trois habitudes quotidiennes à suivre.';
+
+  @override
+  String get homeEmptyCta => 'Créer une habitude';
+
+  @override
+  String get homeMarkCompleteTooltip => 'Marquer comme faite';
+
+  @override
+  String get homeMarkIncompleteTooltip => 'Marquer comme non faite';
+
+  @override
+  String homeCurrentStreakLabel(int count) {
+    return 'Série de $count jour(s)';
+  }
+
+  @override
+  String homeBestStreakLabel(int count) {
+    return 'Meilleure série : $count jours';
+  }
+
+  @override
+  String homeCompletionSnackbar(String habitName) {
+    return 'Habitude $habitName marquée comme faite.';
+  }
+
+  @override
+  String homeUndoSnackbar(String habitName) {
+    return 'Habitude $habitName marquée comme non faite.';
+  }
+
+  @override
+  String homeEditHabitLabel(String habitName) {
+    return 'Modifier $habitName';
+  }
+
+  @override
+  String homeUndoHabitLabel(String habitName) {
+    return 'Annuler pour $habitName';
+  }
+
+  @override
+  String get navHomeLabel => 'Accueil';
+
+  @override
+  String get navHistoryLabel => 'Historique';
+
+  @override
+  String get navSettingsLabel => 'Paramètres';
+
+  @override
+  String get historyTitle => 'Historique';
+
+  @override
+  String get historyPlaceholder =>
+      'Votre historique de séries apparaîtra bientôt ici.';
+
+  @override
+  String get habitFormCreateTitle => 'Créer une habitude';
+
+  @override
+  String get habitFormEditTitle => 'Modifier une habitude';
+
+  @override
+  String get habitFormCreatePlaceholder =>
+      'Le formulaire d\'habitudes arrivera dans une prochaine mise à jour.';
+
+  @override
+  String get habitFormEditPlaceholder =>
+      'La modification des habitudes sera bientôt disponible.';
 
   @override
   String get consentDialogTitle =>

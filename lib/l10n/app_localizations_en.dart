@@ -15,10 +15,95 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTitle => 'Habits';
 
   @override
+  String get homeTodayTitle => 'Today';
+
+  @override
+  String get homeTodayHeadline => 'Today\'s habits';
+
+  @override
   String get homeSettingsTooltip => 'Settings';
 
   @override
   String get homeAddHabitTooltip => 'Add habit';
+
+  @override
+  String homeProgressSummary(int completed, int total) {
+    return 'You\'ve completed $completed of $total habits today';
+  }
+
+  @override
+  String get homeEmptyTitle => 'Add your first habit';
+
+  @override
+  String get homeEmptySubtitle =>
+      'Start by creating up to three daily habits to track.';
+
+  @override
+  String get homeEmptyCta => 'Create a habit';
+
+  @override
+  String get homeMarkCompleteTooltip => 'Mark as done';
+
+  @override
+  String get homeMarkIncompleteTooltip => 'Mark as not done';
+
+  @override
+  String homeCurrentStreakLabel(int count) {
+    return '$count day streak';
+  }
+
+  @override
+  String homeBestStreakLabel(int count) {
+    return 'Best $count days';
+  }
+
+  @override
+  String homeCompletionSnackbar(String habitName) {
+    return 'Marked $habitName as done.';
+  }
+
+  @override
+  String homeUndoSnackbar(String habitName) {
+    return 'Marked $habitName as not done.';
+  }
+
+  @override
+  String homeEditHabitLabel(String habitName) {
+    return 'Edit $habitName';
+  }
+
+  @override
+  String homeUndoHabitLabel(String habitName) {
+    return 'Undo completion for $habitName';
+  }
+
+  @override
+  String get navHomeLabel => 'Home';
+
+  @override
+  String get navHistoryLabel => 'History';
+
+  @override
+  String get navSettingsLabel => 'Settings';
+
+  @override
+  String get historyTitle => 'History';
+
+  @override
+  String get historyPlaceholder => 'Your streak history will appear here soon.';
+
+  @override
+  String get habitFormCreateTitle => 'Create habit';
+
+  @override
+  String get habitFormEditTitle => 'Edit habit';
+
+  @override
+  String get habitFormCreatePlaceholder =>
+      'The habit form will live here in a future update.';
+
+  @override
+  String get habitFormEditPlaceholder => 'Editing habits is coming soon.';
 
   @override
   String get consentDialogTitle => 'Share Anonymous Usage Data?';

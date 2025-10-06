@@ -2,8 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/core/config/app_config.dart';
 import 'package:habit_tracker/core/config/env/selector.dart' as selector;
 import 'package:habit_tracker/core/config/env/dev/firebase_options.dart' as dev;
-import 'package:habit_tracker/core/config/env/staging/firebase_options.dart' as stg;
-import 'package:habit_tracker/core/config/env/prod/firebase_options.dart' as prod;
+import 'package:habit_tracker/core/config/env/staging/firebase_options.dart'
+    as stg;
+import 'package:habit_tracker/core/config/env/prod/firebase_options.dart'
+    as prod;
 
 void main() {
   group('firebaseOptionsFor', () {
@@ -24,14 +26,11 @@ void main() {
 
     test('defaults to AppConfig.environment when null', () {
       final opts = selector.firebaseOptionsFor();
-      expect(
-        [
-          dev.DefaultFirebaseOptions.currentPlatform.appId,
-          stg.DefaultFirebaseOptions.currentPlatform.appId,
-          prod.DefaultFirebaseOptions.currentPlatform.appId,
-        ],
-        contains(opts.appId),
-      );
+      expect([
+        dev.DefaultFirebaseOptions.currentPlatform.appId,
+        stg.DefaultFirebaseOptions.currentPlatform.appId,
+        prod.DefaultFirebaseOptions.currentPlatform.appId,
+      ], contains(opts.appId));
     });
   });
 }

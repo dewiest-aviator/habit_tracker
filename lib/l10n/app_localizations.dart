@@ -110,6 +110,18 @@ abstract class AppLocalizations {
   /// **'Habits'**
   String get homeTitle;
 
+  /// No description provided for @homeTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get homeTodayTitle;
+
+  /// No description provided for @homeTodayHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s habits'**
+  String get homeTodayHeadline;
+
   /// No description provided for @homeSettingsTooltip.
   ///
   /// In en, this message translates to:
@@ -121,6 +133,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add habit'**
   String get homeAddHabitTooltip;
+
+  /// Summary of completed habits for the day.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve completed {completed} of {total} habits today'**
+  String homeProgressSummary(int completed, int total);
+
+  /// No description provided for @homeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first habit'**
+  String get homeEmptyTitle;
+
+  /// No description provided for @homeEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start by creating up to three daily habits to track.'**
+  String get homeEmptySubtitle;
+
+  /// No description provided for @homeEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a habit'**
+  String get homeEmptyCta;
+
+  /// No description provided for @homeMarkCompleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as done'**
+  String get homeMarkCompleteTooltip;
+
+  /// No description provided for @homeMarkIncompleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as not done'**
+  String get homeMarkIncompleteTooltip;
+
+  /// No description provided for @homeCurrentStreakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} day streak'**
+  String homeCurrentStreakLabel(int count);
+
+  /// No description provided for @homeBestStreakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Best {count} days'**
+  String homeBestStreakLabel(int count);
+
+  /// No description provided for @homeCompletionSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked {habitName} as done.'**
+  String homeCompletionSnackbar(String habitName);
+
+  /// No description provided for @homeUndoSnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked {habitName} as not done.'**
+  String homeUndoSnackbar(String habitName);
+
+  /// No description provided for @homeEditHabitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit {habitName}'**
+  String homeEditHabitLabel(String habitName);
+
+  /// No description provided for @homeUndoHabitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo completion for {habitName}'**
+  String homeUndoHabitLabel(String habitName);
+
+  /// No description provided for @navHomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHomeLabel;
+
+  /// No description provided for @navHistoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get navHistoryLabel;
+
+  /// No description provided for @navSettingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get navSettingsLabel;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// No description provided for @historyPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Your streak history will appear here soon.'**
+  String get historyPlaceholder;
+
+  /// No description provided for @habitFormCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create habit'**
+  String get habitFormCreateTitle;
+
+  /// No description provided for @habitFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit habit'**
+  String get habitFormEditTitle;
+
+  /// No description provided for @habitFormCreatePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'The habit form will live here in a future update.'**
+  String get habitFormCreatePlaceholder;
+
+  /// No description provided for @habitFormEditPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing habits is coming soon.'**
+  String get habitFormEditPlaceholder;
 
   /// No description provided for @consentDialogTitle.
   ///

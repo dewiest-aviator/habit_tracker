@@ -8,6 +8,8 @@ class OnboardingState {
     this.errorMessage,
     this.permissionStatus = NotificationPermissionStatus.idle,
     this.isRequestingPermission = false,
+    this.analyticsConsent = true,
+    this.crashConsent = true,
   }) : selectedHabits = selectedHabits ?? const <String, String>{};
 
   final int pageIndex;
@@ -16,6 +18,8 @@ class OnboardingState {
   final String? errorMessage;
   final NotificationPermissionStatus permissionStatus;
   final bool isRequestingPermission;
+  final bool analyticsConsent;
+  final bool crashConsent;
 
   bool get hasNotificationChoice =>
       permissionStatus != NotificationPermissionStatus.idle;
@@ -31,6 +35,8 @@ class OnboardingState {
     String? errorMessage,
     NotificationPermissionStatus? permissionStatus,
     bool? isRequestingPermission,
+    bool? analyticsConsent,
+    bool? crashConsent,
   }) {
     return OnboardingState(
       pageIndex: pageIndex ?? this.pageIndex,
@@ -39,7 +45,9 @@ class OnboardingState {
       errorMessage: errorMessage,
       permissionStatus: permissionStatus ?? this.permissionStatus,
       isRequestingPermission:
-      isRequestingPermission ?? this.isRequestingPermission,
+          isRequestingPermission ?? this.isRequestingPermission,
+      analyticsConsent: analyticsConsent ?? this.analyticsConsent,
+      crashConsent: crashConsent ?? this.crashConsent,
     );
   }
 
@@ -52,19 +60,26 @@ class OnboardingState {
         other.isSaving == isSaving &&
         other.errorMessage == errorMessage &&
         other.permissionStatus == permissionStatus &&
-        other.isRequestingPermission == isRequestingPermission;
+        other.isRequestingPermission == isRequestingPermission &&
+        other.analyticsConsent == analyticsConsent &&
+        other.crashConsent == crashConsent;
   }
 
   @override
   int get hashCode => Object.hash(
-        pageIndex,
-        Object.hashAll(selectedHabits.entries
-            .map((entry) => Object.hash(entry.key, entry.value))),
-        isSaving,
-        errorMessage,
-        permissionStatus,
-        isRequestingPermission,
-      );
+    pageIndex,
+    Object.hashAll(
+      selectedHabits.entries.map(
+        (entry) => Object.hash(entry.key, entry.value),
+      ),
+    ),
+    isSaving,
+    errorMessage,
+    permissionStatus,
+    isRequestingPermission,
+    analyticsConsent,
+    crashConsent,
+  );
 }
 
 bool _mapEquals(Map<String, String> a, Map<String, String> b) {

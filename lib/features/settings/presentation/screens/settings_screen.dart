@@ -151,8 +151,9 @@ class SettingsScreen extends ConsumerWidget {
                   leading: const Icon(Icons.access_time),
                   title: Text(context.l10n.settingsNotificationTimeTitle),
                   subtitle: Text(
-                    context.l10n
-                        .settingsNotificationTimeSubtitle(formattedReminderTime),
+                    context.l10n.settingsNotificationTimeSubtitle(
+                      formattedReminderTime,
+                    ),
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: (!notificationsLoaded || !notificationsEnabled)

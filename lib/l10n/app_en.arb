@@ -2,8 +2,84 @@
   "@@locale": "en",
   "appTitle": "Habit Tracker",
   "homeTitle": "Habits",
+  "homeTodayTitle": "Today",
+  "homeTodayHeadline": "Today's habits",
   "homeSettingsTooltip": "Settings",
   "homeAddHabitTooltip": "Add habit",
+  "homeProgressSummary": "You've completed {completed} of {total} habits today",
+  "@homeProgressSummary": {
+    "description": "Summary of completed habits for the day.",
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeEmptyTitle": "Add your first habit",
+  "homeEmptySubtitle": "Start by creating up to three daily habits to track.",
+  "homeEmptyCta": "Create a habit",
+  "homeMarkCompleteTooltip": "Mark as done",
+  "homeMarkIncompleteTooltip": "Mark as not done",
+  "homeCurrentStreakLabel": "{count} day streak",
+  "@homeCurrentStreakLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeBestStreakLabel": "Best {count} days",
+  "@homeBestStreakLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeCompletionSnackbar": "Marked {habitName} as done.",
+  "@homeCompletionSnackbar": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeUndoSnackbar": "Marked {habitName} as not done.",
+  "@homeUndoSnackbar": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEditHabitLabel": "Edit {habitName}",
+  "@homeEditHabitLabel": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeUndoHabitLabel": "Undo completion for {habitName}",
+  "@homeUndoHabitLabel": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "navHomeLabel": "Home",
+  "navHistoryLabel": "History",
+  "navSettingsLabel": "Settings",
+  "historyTitle": "History",
+  "historyPlaceholder": "Your streak history will appear here soon.",
+  "habitFormCreateTitle": "Create habit",
+  "habitFormEditTitle": "Edit habit",
+  "habitFormCreatePlaceholder": "The habit form will live here in a future update.",
+  "habitFormEditPlaceholder": "Editing habits is coming soon.",
   "consentDialogTitle": "Share Anonymous Usage Data?",
   "consentDialogBody": "Help us improve Habit Tracker by sharing anonymized usage metrics and crash reports. You can change this later in Settings.",
   "consentNotNow": "Not now",

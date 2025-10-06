@@ -1,35 +1,201 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:habit_tracker/core/localization/l10n_extensions.dart';
-import 'package:habit_tracker/core/services/analytics_service.dart';
+import 'package:habit_tracker/features/habits/application/home_controller.dart';
+import 'package:habit_tracker/features/habits/application/home_state.dart';
+import 'package:habit_tracker/features/habits/presentation/widgets/habit_card.dart';
+import 'package:habit_tracker/features/habits/presentation/widgets/home_empty_state.dart';
+import 'package:habit_tracker/features/habits/presentation/widgets/home_progress_summary.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<HomeState>(homeControllerProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+    });
+
+    final state = ref.watch(homeControllerProvider);
+    final notifier = ref.read(homeControllerProvider.notifier);
+    final l10n = context.l10n;
+
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.homeTitle)),
-      body: Center(
-        child: ElevatedButton.icon(
-          key: const Key('btn_settings'),
-          onPressed: () {
-            unawaited(AnalyticsService.logEvent('open_settings_tap'));
-            context.push('/settings');
-          },
-          icon: const Icon(Icons.settings),
-          label: Text(context.l10n.homeSettingsTooltip),
+      appBar: AppBar(title: Text(l10n.homeTodayTitle)),
+      body: RefreshIndicator(
+        onRefresh: () => notifier.refresh(),
+        child: _HomeBody(
+          state: state,
+          onToggleHabit: (habit) => _handleToggle(context, ref, habit),
+          onShowActions: (habit) => _showHabitActions(context, ref, habit),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          unawaited(AnalyticsService.logEvent('add_habit_tap'));
-        },
-        tooltip: context.l10n.homeAddHabitTooltip,
+        onPressed: state.canAddHabit
+            ? () {
+                if (state.canAddHabit) {
+                  context.pushNamed('habit_form');
+                }
+              }
+            : null,
+        tooltip: l10n.homeAddHabitTooltip,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Future<void> _handleToggle(
+    BuildContext context,
+    WidgetRef ref,
+    HomeHabitViewData habit,
+  ) async {
+    HapticFeedback.lightImpact();
+    final result = await ref
+        .read(homeControllerProvider.notifier)
+        .toggleHabit(habit.habit.id);
+    if (!context.mounted || result == null) {
+      return;
+    }
+
+    final message = result
+        ? context.l10n.homeCompletionSnackbar(habit.habit.name)
+        : context.l10n.homeUndoSnackbar(habit.habit.name);
+    unawaited(
+      Future<void>.delayed(Duration.zero, () {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
+      }),
+    );
+  }
+
+  Future<void> _showHabitActions(
+    BuildContext context,
+    WidgetRef ref,
+    HomeHabitViewData habit,
+  ) async {
+    final action = await showModalBottomSheet<_HabitAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return _HabitActionsSheet(
+          habitName: habit.habit.name,
+          isCompleted: habit.isCompleted,
+        );
+      },
+    );
+
+    if (!context.mounted || action == null) {
+      return;
+    }
+
+    switch (action) {
+      case _HabitAction.edit:
+        context.pushNamed('habit_form', extra: habit.habit.id);
+        break;
+      case _HabitAction.undo:
+        if (habit.isCompleted) {
+          await _handleToggle(context, ref, habit);
+        }
+        break;
+    }
+  }
+}
+
+class _HomeBody extends StatelessWidget {
+  const _HomeBody({
+    required this.state,
+    required this.onToggleHabit,
+    required this.onShowActions,
+  });
+
+  final HomeState state;
+  final Future<void> Function(HomeHabitViewData habit) onToggleHabit;
+  final Future<void> Function(HomeHabitViewData habit) onShowActions;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.isLoading && state.habits.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 48),
+          HomeEmptyState(onAdd: () => context.pushNamed('habit_form')),
+          const SizedBox(height: 48),
+        ],
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return HomeProgressSummary(
+            completed: state.completedCount,
+            total: state.habits.length,
+          );
+        }
+
+        final habit = state.habits[index - 1];
+        return HabitCard(
+          data: habit,
+          onToggle: () => onToggleHabit(habit),
+          onLongPress: () => onShowActions(habit),
+        );
+      },
+      separatorBuilder: (context, index) => const SizedBox(height: 16),
+      itemCount: state.habits.length + 1,
+    );
+  }
+}
+
+enum _HabitAction { edit, undo }
+
+class _HabitActionsSheet extends StatelessWidget {
+  const _HabitActionsSheet({
+    required this.habitName,
+    required this.isCompleted,
+  });
+
+  final String habitName;
+  final bool isCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: Text(l10n.homeEditHabitLabel(habitName)),
+            onTap: () => Navigator.of(context).pop(_HabitAction.edit),
+          ),
+          if (isCompleted)
+            ListTile(
+              leading: const Icon(Icons.refresh),
+              title: Text(l10n.homeUndoHabitLabel(habitName)),
+              onTap: () => Navigator.of(context).pop(_HabitAction.undo),
+            ),
+        ],
       ),
     );
   }

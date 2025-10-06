@@ -102,5 +102,80 @@
   "onboardingHabitHydrate": "Boire de l'eau",
   "onboardingHabitJournal": "Écrire dans mon journal",
   "onboardingHabitStretch": "M'étirer",
-  "onboardingHabitRead": "Lire"
+  "onboardingHabitRead": "Lire",
+  "homeTodayTitle": "Aujourd'hui",
+  "homeTodayHeadline": "Habitudes du jour",
+  "homeProgressSummary": "Vous avez terminé {completed} sur {total} habitudes aujourd'hui",
+  "@homeProgressSummary": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeEmptyTitle": "Ajoutez votre première habitude",
+  "homeEmptySubtitle": "Commencez en créant jusqu'à trois habitudes quotidiennes à suivre.",
+  "homeEmptyCta": "Créer une habitude",
+  "homeMarkCompleteTooltip": "Marquer comme faite",
+  "homeMarkIncompleteTooltip": "Marquer comme non faite",
+  "homeCurrentStreakLabel": "Série de {count} jour(s)",
+  "@homeCurrentStreakLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeBestStreakLabel": "Meilleure série : {count} jours",
+  "@homeBestStreakLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeCompletionSnackbar": "Habitude {habitName} marquée comme faite.",
+  "@homeCompletionSnackbar": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeUndoSnackbar": "Habitude {habitName} marquée comme non faite.",
+  "@homeUndoSnackbar": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeEditHabitLabel": "Modifier {habitName}",
+  "@homeEditHabitLabel": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "homeUndoHabitLabel": "Annuler pour {habitName}",
+  "@homeUndoHabitLabel": {
+    "placeholders": {
+      "habitName": {
+        "type": "String"
+      }
+    }
+  },
+  "navHomeLabel": "Accueil",
+  "navHistoryLabel": "Historique",
+  "navSettingsLabel": "Paramètres",
+  "historyTitle": "Historique",
+  "historyPlaceholder": "Votre historique de séries apparaîtra bientôt ici.",
+  "habitFormCreateTitle": "Créer une habitude",
+  "habitFormEditTitle": "Modifier une habitude",
+  "habitFormCreatePlaceholder": "Le formulaire d'habitudes arrivera dans une prochaine mise à jour.",
+  "habitFormEditPlaceholder": "La modification des habitudes sera bientôt disponible."
 }

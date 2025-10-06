@@ -66,9 +66,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   if (state.pageIndex < 2)
                     TextButton(
-                      onPressed: () {
-                        controller.skipToNotifications();
-                      },
+                      onPressed: state.isSaving
+                          ? null
+                          : () async {
+                              final success = await controller.skipOnboarding();
+                              if (!context.mounted || !success) {
+                                return;
+                              }
+                              if (context.mounted) {
+                                context.goNamed('home');
+                              }
+                            },
                       child: Text(l10n.onboardingSkip),
                     ),
                 ],
@@ -181,10 +189,8 @@ class _HabitSelectionPage extends ConsumerWidget {
                     template: template,
                     label: template.label(l10n),
                     selected: state.selectedHabits.containsKey(template.id),
-                    onTap: () => controller.toggleHabit(
-                      template,
-                      template.label(l10n),
-                    ),
+                    onTap: () =>
+                        controller.toggleHabit(template, template.label(l10n)),
                   ),
               ],
             ),
@@ -222,105 +228,147 @@ class _NotificationsPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final controller = ref.read(onboardingControllerProvider.notifier);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          l10n.onboardingNotificationsTitle,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.onboardingNotificationsSubtitle,
-          style: theme.textTheme.bodyMedium,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: state.isRequestingPermission
-                ? null
-                : () => controller.enableNotifications(),
-            child: state.isRequestingPermission
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.onPrimary,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  l10n.onboardingNotificationsTitle,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.onboardingNotificationsSubtitle,
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: state.isRequestingPermission
+                        ? null
+                        : () => controller.enableNotifications(),
+                    child: state.isRequestingPermission
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                        : Text(l10n.onboardingEnableReminders),
+                  ),
+                ),
+                TextButton(
+                  onPressed: state.isRequestingPermission
+                      ? null
+                      : () => controller.declineNotifications(),
+                  child: Text(l10n.onboardingMaybeLater),
+                ),
+                const SizedBox(height: 16),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: state.hasNotificationChoice
+                      ? Column(
+                          key: ValueKey(state.permissionStatus),
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              state.permissionStatus ==
+                                      NotificationPermissionStatus.granted
+                                  ? l10n.onboardingNotificationsGranted
+                                  : l10n.onboardingNotificationsDenied,
+                              style: theme.textTheme.bodyMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              l10n.onboardingFinishTitle,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.settingsPrivacySection,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SwitchListTile.adaptive(
+                        title: Text(l10n.settingsAnalyticsToggle),
+                        subtitle: Text(l10n.settingsAnalyticsSubtitle),
+                        value: state.analyticsConsent,
+                        onChanged: controller.setAnalyticsConsent,
                       ),
-                    ),
-                  )
-                : Text(l10n.onboardingEnableReminders),
-          ),
-        ),
-        TextButton(
-          onPressed: state.isRequestingPermission
-              ? null
-              : () => controller.declineNotifications(),
-          child: Text(l10n.onboardingMaybeLater),
-        ),
-        const SizedBox(height: 16),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          child: state.hasNotificationChoice
-              ? Column(
-                  key: ValueKey(state.permissionStatus),
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      state.permissionStatus ==
-                              NotificationPermissionStatus.granted
-                          ? l10n.onboardingNotificationsGranted
-                          : l10n.onboardingNotificationsDenied,
-                      style: theme.textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.onboardingFinishTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      const Divider(height: 0),
+                      SwitchListTile.adaptive(
+                        title: Text(l10n.settingsCrashToggle),
+                        subtitle: Text(l10n.settingsCrashSubtitle),
+                        value: state.crashConsent,
+                        onChanged: controller.setCrashConsent,
                       ),
-                      textAlign: TextAlign.center,
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (state.errorMessage != null) ...[
+                  Text(
+                    l10n.onboardingError(state.errorMessage!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
                     ),
-                  ],
-                )
-              : const SizedBox.shrink(),
-        ),
-        const Spacer(),
-        if (state.errorMessage != null) ...[
-          Text(
-            l10n.onboardingError(state.errorMessage!),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: state.canFinish
+                        ? () async {
+                            final success = await controller
+                                .completeOnboarding();
+                            if (!context.mounted || !success) {
+                              return;
+                            }
+                            if (context.mounted) {
+                              context.goNamed('home');
+                            }
+                          }
+                        : null,
+                    child: Text(l10n.onboardingFinishCta),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-        ],
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: state.canFinish
-                ? () async {
-                    final success = await controller.completeOnboarding();
-                    if (!context.mounted || !success) {
-                      return;
-                    }
-                    if (context.mounted) {
-                      context.goNamed('home');
-                    }
-                  }
-                : null,
-            child: Text(l10n.onboardingFinishCta),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -372,10 +420,7 @@ class _StarterHabitCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                template.emoji,
-                style: const TextStyle(fontSize: 40),
-              ),
+              Text(template.emoji, style: const TextStyle(fontSize: 40)),
               const SizedBox(height: 12),
               Text(
                 label,
@@ -400,10 +445,7 @@ class _StarterHabitCard extends StatelessWidget {
 }
 
 class _ProgressDots extends StatelessWidget {
-  const _ProgressDots({
-    required this.currentIndex,
-    required this.total,
-  });
+  const _ProgressDots({required this.currentIndex, required this.total});
 
   final int currentIndex;
   final int total;
