@@ -1,14 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  NotificationService({FlutterLocalNotificationsPlugin? plugin})
-    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  NotificationService({
+    FlutterLocalNotificationsPlugin? plugin,
+    Future<String> Function()? timeZoneNameProvider,
+  })  : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+        _timeZoneNameProvider =
+            timeZoneNameProvider ?? _defaultTimeZoneNameProvider;
 
   final FlutterLocalNotificationsPlugin _plugin;
+  final Future<String> Function() _timeZoneNameProvider;
   static bool _timeZonesInitialized = false;
 
   FlutterLocalNotificationsPlugin get plugin => _plugin;
@@ -107,7 +114,27 @@ class NotificationService {
   Future<void> _ensureTimeZonesInitialized() async {
     if (_timeZonesInitialized) return;
     tz.initializeTimeZones();
+    try {
+      final name = await _timeZoneNameProvider();
+      final location = tz.getLocation(name);
+      tz.setLocalLocation(location);
+    } catch (_) {
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
     _timeZonesInitialized = true;
+  }
+
+  @visibleForTesting
+  static void resetInitialization() {
+    _timeZonesInitialized = false;
+  }
+
+  static Future<String> _defaultTimeZoneNameProvider() async {
+    try {
+      return await FlutterNativeTimezone.getLocalTimezone();
+    } catch (_) {
+      return 'UTC';
+    }
   }
 
   int _notificationIdForHabit(String habitId, int dayIndex) {

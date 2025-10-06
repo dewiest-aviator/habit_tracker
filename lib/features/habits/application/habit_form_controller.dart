@@ -320,6 +320,9 @@ class HabitFormController extends StateNotifier<HabitFormState> {
       }
     }
 
+    final previousMode = state.mode;
+    final previousReminderEnabled = state.reminderEnabled;
+
     _emit(state.copyWith(isSaving: true, clearErrorMessage: true));
 
     try {
@@ -343,15 +346,18 @@ class HabitFormController extends StateNotifier<HabitFormState> {
       );
       await _analytics.logSaveSuccess(
         habit: habit,
-        mode: state.mode,
-        reminderEnabled: state.reminderEnabled,
+        mode: previousMode,
+        reminderEnabled: previousReminderEnabled,
       );
       return HabitFormSaveResult.success(
         habit: habit,
-        isNew: state.mode == HabitFormMode.create,
+        isNew: previousMode == HabitFormMode.create,
       );
     } catch (error) {
-      await _analytics.logSaveFail(mode: state.mode, errorCode: 'exception');
+      await _analytics.logSaveFail(
+        mode: previousMode,
+        errorCode: 'exception',
+      );
       _emit(state.copyWith(isSaving: false, errorMessage: error.toString()));
       return HabitFormSaveResult.failure(message: error.toString());
     }
@@ -447,9 +453,11 @@ class HabitFormController extends StateNotifier<HabitFormState> {
         _baseline.reminderTime != state.reminderTime ||
         _baseline.reminderEnabled != state.reminderEnabled ||
         !listEquals(_baseline.days, state.days);
+    final hadScheduledReminder =
+        _baseline.reminderEnabled && _baseline.reminderTime.isNotEmpty;
 
     if (!shouldSchedule) {
-      if (_baseline.reminderEnabled || _baseline.reminderTime.isNotEmpty) {
+      if (hadScheduledReminder) {
         await _notificationService.cancelHabitReminder(habit.reminderId);
       }
       return;
@@ -457,6 +465,10 @@ class HabitFormController extends StateNotifier<HabitFormState> {
 
     if (!reminderChanged && state.mode == HabitFormMode.edit) {
       return;
+    }
+
+    if (reminderChanged && hadScheduledReminder) {
+      await _notificationService.cancelHabitReminder(habit.reminderId);
     }
 
     await _notificationService.scheduleHabitReminder(

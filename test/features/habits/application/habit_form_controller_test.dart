@@ -181,7 +181,115 @@ void main() {
     final result = await controller.submit(reminderStrings: reminderStrings());
 
     expect(result.status, HabitFormSaveStatus.success);
+    expect(result.isNew, isTrue);
     verify(() => habitsRepository.saveHabit(any())).called(1);
+    verifyNever(() => notificationService.cancelHabitReminder(any()));
+  });
+
+  test('submit returns edit result when updating existing habit', () async {
+    final habit = Habit(
+      id: 'habit-1',
+      name: 'Stretch',
+      emoji: '🧘',
+      color: 0xFF4F46E5,
+      days: const [0, 2, 4],
+      reminderId: 'reminder-1',
+      reminderTime: '08:00',
+      bestStreak: 0,
+      currentStreak: 0,
+    );
+    when(() => habitsRepository.findById('habit-1'))
+        .thenAnswer((_) async => habit);
+
+    final controller = buildController(habitId: 'habit-1');
+    await Future<void>.delayed(Duration.zero);
+
+    controller.setName('Evening stretch');
+    final result = await controller.submit(reminderStrings: reminderStrings());
+
+    expect(result.status, HabitFormSaveStatus.success);
+    expect(result.isNew, isFalse);
+  });
+
+  test('submit cancels and reschedules reminders when editing reminder days',
+      () async {
+    final habit = Habit(
+      id: 'habit-1',
+      name: 'Stretch',
+      emoji: '🧘',
+      color: 0xFF4F46E5,
+      days: const [0, 2, 4],
+      reminderId: 'reminder-1',
+      reminderTime: '08:00',
+      bestStreak: 0,
+      currentStreak: 0,
+    );
+    when(() => habitsRepository.findById('habit-1'))
+        .thenAnswer((_) async => habit);
+
+    final controller = buildController(habitId: 'habit-1');
+    await Future<void>.delayed(Duration.zero);
+
+    controller.setDays(const [0, 1]);
+    final result = await controller.submit(reminderStrings: reminderStrings());
+
+    expect(result.status, HabitFormSaveStatus.success);
+    verifyInOrder([
+      () => notificationService.cancelHabitReminder('reminder-1'),
+      () => notificationService.scheduleHabitReminder(
+            habitId: 'reminder-1',
+            title: any(named: 'title'),
+            body: any(named: 'body'),
+            days: any(named: 'days'),
+            time: any(named: 'time'),
+          ),
+    ]);
+    final captured = verify(
+      () => notificationService.scheduleHabitReminder(
+        habitId: 'reminder-1',
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        days: captureAny(named: 'days'),
+        time: captureAny(named: 'time'),
+      ),
+    ).captured;
+    expect(captured[0] as List<int>, equals(const [0, 1]));
+    expect(captured[1] as String, equals('08:00'));
+  });
+
+  test('submit leaves existing reminders untouched when settings are unchanged',
+      () async {
+    final habit = Habit(
+      id: 'habit-1',
+      name: 'Stretch',
+      emoji: '🧘',
+      color: 0xFF4F46E5,
+      days: const [0, 2, 4],
+      reminderId: 'reminder-1',
+      reminderTime: '08:00',
+      bestStreak: 0,
+      currentStreak: 0,
+    );
+    when(() => habitsRepository.findById('habit-1'))
+        .thenAnswer((_) async => habit);
+
+    final controller = buildController(habitId: 'habit-1');
+    await Future<void>.delayed(Duration.zero);
+
+    controller.setName('Morning stretch');
+    final result = await controller.submit(reminderStrings: reminderStrings());
+
+    expect(result.status, HabitFormSaveStatus.success);
+    verifyNever(() => notificationService.cancelHabitReminder(any()));
+    verifyNever(
+      () => notificationService.scheduleHabitReminder(
+        habitId: any(named: 'habitId'),
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        days: any(named: 'days'),
+        time: any(named: 'time'),
+      ),
+    );
   });
 
   test('deleteHabit removes persisted habit', () async {
