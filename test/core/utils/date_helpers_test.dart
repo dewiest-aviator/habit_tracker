@@ -33,5 +33,12 @@ void main() {
 
       expect(remaining, const Duration(hours: 1, minutes: 30));
     });
+
+    test('nextDayStart returns the following midnight', () {
+      final date = DateTime(2024, 1, 15, 23, 59);
+      final next = DateHelpers.nextDayStart(date);
+
+      expect(next, DateTime(2024, 1, 16));
+    });
   });
 }

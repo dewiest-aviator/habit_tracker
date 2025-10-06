@@ -8,6 +8,7 @@ coverage:
   ignore:
     - "docs/**"
     - "android/**"
+    - "lib/l10n/**"
 
   status:
     project:
