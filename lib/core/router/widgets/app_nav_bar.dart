@@ -4,32 +4,22 @@ import 'package:go_router/go_router.dart';
 import 'package:habit_tracker/core/localization/l10n_extensions.dart';
 
 class AppNavBar extends StatelessWidget {
-  const AppNavBar({super.key, required this.currentIndex});
+  const AppNavBar({super.key, required this.navigationShell});
 
-  final int currentIndex;
+  final StatefulNavigationShell navigationShell;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final router = GoRouter.maybeOf(context);
+    final currentIndex = navigationShell.currentIndex;
 
     return NavigationBar(
       selectedIndex: currentIndex,
       onDestinationSelected: (index) {
-        if (router == null || index == currentIndex) {
-          return;
-        }
-        switch (index) {
-          case 0:
-            router.go('/');
-            break;
-          case 1:
-            router.go('/history');
-            break;
-          case 2:
-            router.go('/settings');
-            break;
-        }
+        navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        );
       },
       destinations: [
         NavigationDestination(

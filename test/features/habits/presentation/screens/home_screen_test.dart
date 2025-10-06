@@ -22,16 +22,45 @@ class _MockToggleHabitCompletion extends Mock
     implements ToggleHabitCompletion {}
 
 GoRouter _createRouter() {
+  final rootKey = GlobalKey<NavigatorState>();
   return GoRouter(
+    navigatorKey: rootKey,
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => navigationShell,
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/history',
+                builder: (context, state) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ],
+      ),
       GoRoute(
+        parentNavigatorKey: rootKey,
         path: '/habit_form',
         builder: (context, state) => const SizedBox(),
       ),
-      GoRoute(path: '/history', builder: (context, state) => const SizedBox()),
-      GoRoute(path: '/settings', builder: (context, state) => const SizedBox()),
     ],
   );
 }

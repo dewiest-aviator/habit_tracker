@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tracker/core/localization/l10n_extensions.dart';
-import 'package:habit_tracker/core/router/widgets/app_nav_bar.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
@@ -21,7 +20,6 @@ class HistoryScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const AppNavBar(currentIndex: 1),
     );
   }
 }

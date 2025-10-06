@@ -16,6 +16,8 @@ import 'package:habit_tracker/features/settings/application/providers/notificati
 import 'package:habit_tracker/l10n/app_localizations.dart';
 import 'package:habit_tracker/l10n/app_localizations_en.dart';
 import 'package:habit_tracker/core/services/notification_service.dart';
+import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
+import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
 
 class _MockHabitsRepository extends Mock implements HabitsRepository {}
 
@@ -42,6 +44,7 @@ Future<void> _pumpOnboarding(
   required HabitsRepository habitsRepository,
   required NotificationService notificationService,
   required NotificationSettingsController notificationSettings,
+  required TelemetryController telemetryController,
   required SharedPreferences prefs,
 }) async {
   await tester.pumpWidget(
@@ -52,11 +55,13 @@ Future<void> _pumpOnboarding(
         notificationSettingsProvider.overrideWith((ref) {
           return notificationSettings;
         }),
+        telemetryControllerProvider.overrideWith((ref) => telemetryController),
         onboardingControllerProvider.overrideWith((ref) {
           final controller = OnboardingController(
             habitsRepository: habitsRepository,
             notificationService: notificationService,
             notificationSettings: notificationSettings,
+            telemetryController: telemetryController,
             preferences: prefs,
           );
           return controller;
@@ -78,6 +83,7 @@ void main() {
   late _MockHabitsRepository habitsRepository;
   late _MockNotificationService notificationService;
   late _TestNotificationSettingsController notificationSettings;
+  late TelemetryController telemetryController;
   late SharedPreferences prefs;
   final l10n = AppLocalizationsEn();
 
@@ -103,6 +109,9 @@ void main() {
     habitsRepository = _MockHabitsRepository();
     notificationService = _MockNotificationService();
     notificationSettings = _TestNotificationSettingsController(prefs: prefs);
+    telemetryController = TelemetryController(enableFirebase: false);
+    await telemetryController.initialize();
+    addTearDown(telemetryController.dispose);
 
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
   });
@@ -138,6 +147,7 @@ void main() {
       habitsRepository: habitsRepository,
       notificationService: notificationService,
       notificationSettings: notificationSettings,
+      telemetryController: telemetryController,
       prefs: prefs,
     );
 
@@ -181,12 +191,15 @@ void main() {
       ElevatedButton,
       l10n.onboardingFinishCta,
     );
+    await tester.ensureVisible(finishFinder);
     await tester.tap(finishFinder);
     await tester.pumpAndSettle();
 
     expect(find.text('Home Screen'), findsOneWidget);
     expect(prefs.getBool(OnboardingController.hasOnboardedKey), isTrue);
     expect(notificationSettings.lastEnabledValue, isTrue);
+    expect(telemetryController.isAnalyticsEnabled, isTrue);
+    expect(telemetryController.isCrashEnabled, isTrue);
     verify(() => notificationService.requestPermission()).called(1);
     verify(() => habitsRepository.saveHabit(any())).called(2);
   });
@@ -217,6 +230,7 @@ void main() {
       habitsRepository: habitsRepository,
       notificationService: notificationService,
       notificationSettings: notificationSettings,
+      telemetryController: telemetryController,
       prefs: prefs,
     );
 
@@ -241,25 +255,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.onboardingNotificationsDenied), findsOneWidget);
+    expect(find.text(l10n.settingsAnalyticsToggle), findsOneWidget);
+    expect(find.text(l10n.settingsCrashToggle), findsOneWidget);
 
     final finishFinder = find.widgetWithText(
       ElevatedButton,
       l10n.onboardingFinishCta,
     );
     expect(tester.widget<ElevatedButton>(finishFinder).onPressed, isNotNull);
+    await tester.ensureVisible(finishFinder);
 
     await tester.tap(finishFinder);
     await tester.pumpAndSettle();
 
     expect(find.text('Home Screen'), findsOneWidget);
     expect(notificationSettings.lastEnabledValue, isFalse);
+    expect(telemetryController.isAnalyticsEnabled, isTrue);
+    expect(telemetryController.isCrashEnabled, isTrue);
     verifyNever(() => notificationService.requestPermission());
     verify(() => habitsRepository.saveHabit(any())).called(1);
   });
 
-  testWidgets('skip jumps to reminders step with finish enabled', (
-    tester,
-  ) async {
+  testWidgets('skip completes onboarding immediately', (tester) async {
     final router = GoRouter(
       routes: [
         GoRoute(
@@ -283,20 +300,18 @@ void main() {
       habitsRepository: habitsRepository,
       notificationService: notificationService,
       notificationSettings: notificationSettings,
+      telemetryController: telemetryController,
       prefs: prefs,
     );
 
     await tester.tap(find.text(l10n.onboardingSkip));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.onboardingNotificationsTitle), findsOneWidget);
+    expect(find.text('Home Screen'), findsOneWidget);
     expect(notificationSettings.setEnabledCallCount, 1);
     expect(notificationSettings.lastEnabledValue, isFalse);
-
-    final finishFinder = find.widgetWithText(
-      ElevatedButton,
-      l10n.onboardingFinishCta,
-    );
-    expect(tester.widget<ElevatedButton>(finishFinder).onPressed, isNotNull);
+    expect(telemetryController.isAnalyticsEnabled, isTrue);
+    expect(telemetryController.isCrashEnabled, isTrue);
+    expect(prefs.getBool(OnboardingController.hasOnboardedKey), isTrue);
   });
 }

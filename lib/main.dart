@@ -12,7 +12,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:habit_tracker/core/config/env/selector.dart' as env_selector;
 import 'core/config/app_config.dart';
-import 'core/localization/l10n_extensions.dart';
 import 'core/router/app_router.dart';
 import 'core/telemetry/controllers/telemetry_controller.dart';
 import 'core/telemetry/providers/telemetry_provider.dart';
@@ -170,133 +169,7 @@ class HabitTrackerApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
-      builder: (context, child) =>
-          _ConsentPromptOverlay(navigatorKey: rootNavigatorKey, child: child),
+      builder: (context, child) => child ?? const SizedBox.shrink(),
     );
-  }
-}
-
-class _ConsentPromptOverlay extends ConsumerStatefulWidget {
-  const _ConsentPromptOverlay({
-    required this.child,
-    required this.navigatorKey,
-  });
-
-  final Widget? child;
-  final GlobalKey<NavigatorState> navigatorKey;
-
-  @override
-  ConsumerState<_ConsentPromptOverlay> createState() =>
-      _ConsentPromptOverlayState();
-}
-
-class _ConsentPromptOverlayState extends ConsumerState<_ConsentPromptOverlay> {
-  TelemetryController? _controller;
-  bool _dialogShown = false;
-  ProviderSubscription<TelemetryController>? _subscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _attachController(ref.read(telemetryControllerProvider));
-    _maybeShowDialog();
-
-    _subscription = ref.listenManual<TelemetryController>(
-      telemetryControllerProvider,
-      (previous, controller) {
-        _attachController(controller);
-        _maybeShowDialog();
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller?.removeListener(_handleControllerChanged);
-    _subscription?.close();
-    super.dispose();
-  }
-
-  void _attachController(TelemetryController controller) {
-    if (!identical(controller, _controller)) {
-      _controller?.removeListener(_handleControllerChanged);
-      _controller = controller..addListener(_handleControllerChanged);
-    }
-  }
-
-  void _handleControllerChanged() {
-    _maybeShowDialog();
-  }
-
-  void _maybeShowDialog() {
-    final controller = _controller;
-    if (controller == null) return;
-    if (_dialogShown) return;
-    if (!controller.isLoaded) return;
-    if (controller.hasRecordedDecision) return;
-
-    final navigatorContext = widget.navigatorKey.currentContext;
-    if (navigatorContext == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _maybeShowDialog();
-        }
-      });
-      return;
-    }
-
-    _dialogShown = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showDialog<void>(
-        context: navigatorContext,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          final l10n = dialogContext.l10n;
-
-          return AlertDialog(
-            title: Text(l10n.consentDialogTitle),
-            content: Text(l10n.consentDialogBody),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  await ref
-                      .read(telemetryControllerProvider)
-                      .updateConsent(false);
-                  if (navigatorContext.mounted) {
-                    Navigator.of(navigatorContext).pop();
-                  }
-                },
-                child: Text(l10n.consentNotNow),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  await ref
-                      .read(telemetryControllerProvider)
-                      .updateConsent(true);
-                  if (navigatorContext.mounted) {
-                    Navigator.of(navigatorContext).pop();
-                  }
-                },
-                child: Text(l10n.consentShare),
-              ),
-            ],
-          );
-        },
-      ).whenComplete(() {
-        if (!mounted) return;
-        // If the user dismissed via system back, keep showing next frame.
-        final controller = _controller;
-        if (controller != null && !controller.hasRecordedDecision) {
-          _dialogShown = false;
-          _maybeShowDialog();
-        }
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child ?? const SizedBox.shrink();
   }
 }

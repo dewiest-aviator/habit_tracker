@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:habit_tracker/core/localization/l10n_extensions.dart';
-import 'package:habit_tracker/core/router/widgets/app_nav_bar.dart';
 import 'package:habit_tracker/features/habits/application/home_controller.dart';
 import 'package:habit_tracker/features/habits/application/home_state.dart';
 import 'package:habit_tracker/features/habits/presentation/widgets/habit_card.dart';
@@ -45,14 +44,13 @@ class HomeScreen extends ConsumerWidget {
         onPressed: state.canAddHabit
             ? () {
                 if (state.canAddHabit) {
-                  context.go('/habit_form');
+                  context.pushNamed('habit_form');
                 }
               }
             : null,
         tooltip: l10n.homeAddHabitTooltip,
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: const AppNavBar(currentIndex: 0),
     );
   }
 
@@ -104,7 +102,7 @@ class HomeScreen extends ConsumerWidget {
 
     switch (action) {
       case _HabitAction.edit:
-        context.go('/habit_form', extra: habit.habit.id);
+        context.pushNamed('habit_form', extra: habit.habit.id);
         break;
       case _HabitAction.undo:
         if (habit.isCompleted) {
@@ -137,7 +135,7 @@ class _HomeBody extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const SizedBox(height: 48),
-          HomeEmptyState(onAdd: () => context.go('/habit_form')),
+          HomeEmptyState(onAdd: () => context.pushNamed('habit_form')),
           const SizedBox(height: 48),
         ],
       );

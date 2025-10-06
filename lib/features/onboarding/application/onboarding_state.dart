@@ -8,6 +8,8 @@ class OnboardingState {
     this.errorMessage,
     this.permissionStatus = NotificationPermissionStatus.idle,
     this.isRequestingPermission = false,
+    this.analyticsConsent = true,
+    this.crashConsent = true,
   }) : selectedHabits = selectedHabits ?? const <String, String>{};
 
   final int pageIndex;
@@ -16,6 +18,8 @@ class OnboardingState {
   final String? errorMessage;
   final NotificationPermissionStatus permissionStatus;
   final bool isRequestingPermission;
+  final bool analyticsConsent;
+  final bool crashConsent;
 
   bool get hasNotificationChoice =>
       permissionStatus != NotificationPermissionStatus.idle;
@@ -31,6 +35,8 @@ class OnboardingState {
     String? errorMessage,
     NotificationPermissionStatus? permissionStatus,
     bool? isRequestingPermission,
+    bool? analyticsConsent,
+    bool? crashConsent,
   }) {
     return OnboardingState(
       pageIndex: pageIndex ?? this.pageIndex,
@@ -40,6 +46,8 @@ class OnboardingState {
       permissionStatus: permissionStatus ?? this.permissionStatus,
       isRequestingPermission:
           isRequestingPermission ?? this.isRequestingPermission,
+      analyticsConsent: analyticsConsent ?? this.analyticsConsent,
+      crashConsent: crashConsent ?? this.crashConsent,
     );
   }
 
@@ -52,7 +60,9 @@ class OnboardingState {
         other.isSaving == isSaving &&
         other.errorMessage == errorMessage &&
         other.permissionStatus == permissionStatus &&
-        other.isRequestingPermission == isRequestingPermission;
+        other.isRequestingPermission == isRequestingPermission &&
+        other.analyticsConsent == analyticsConsent &&
+        other.crashConsent == crashConsent;
   }
 
   @override
@@ -67,6 +77,8 @@ class OnboardingState {
     errorMessage,
     permissionStatus,
     isRequestingPermission,
+    analyticsConsent,
+    crashConsent,
   );
 }
 

@@ -9,6 +9,7 @@ import 'package:habit_tracker/features/habits/data/repositories/habits_repositor
 import 'package:habit_tracker/features/habits/domain/entities/habit.dart';
 import 'package:habit_tracker/features/settings/application/controllers/notification_settings_controller.dart';
 import 'package:habit_tracker/core/services/notification_service.dart';
+import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
 
 class _MockHabitsRepository extends Mock implements HabitsRepository {}
 
@@ -17,10 +18,13 @@ class _MockNotificationService extends Mock implements NotificationService {}
 class _MockNotificationSettingsController extends Mock
     implements NotificationSettingsController {}
 
+class _MockTelemetryController extends Mock implements TelemetryController {}
+
 void main() {
   late _MockHabitsRepository habitsRepository;
   late _MockNotificationService notificationService;
   late _MockNotificationSettingsController notificationSettings;
+  late _MockTelemetryController telemetryController;
   late SharedPreferences prefs;
 
   setUpAll(() {
@@ -45,12 +49,17 @@ void main() {
     habitsRepository = _MockHabitsRepository();
     notificationService = _MockNotificationService();
     notificationSettings = _MockNotificationSettingsController();
+    telemetryController = _MockTelemetryController();
 
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
     when(() => notificationSettings.setEnabled(any())).thenAnswer((_) async {});
     when(
       () => notificationService.requestPermission(),
     ).thenAnswer((_) async => true);
+    when(() => telemetryController.updateAnalyticsConsent(any()))
+        .thenAnswer((_) async {});
+    when(() => telemetryController.updateCrashConsent(any()))
+        .thenAnswer((_) async {});
   });
 
   OnboardingController buildController() {
@@ -58,6 +67,7 @@ void main() {
       habitsRepository: habitsRepository,
       notificationService: notificationService,
       notificationSettings: notificationSettings,
+      telemetryController: telemetryController,
       preferences: prefs,
     );
   }
@@ -83,6 +93,8 @@ void main() {
 
     expect(result, isTrue);
     verify(() => habitsRepository.saveHabit(any())).called(2);
+    verify(() => telemetryController.updateAnalyticsConsent(true)).called(1);
+    verify(() => telemetryController.updateCrashConsent(true)).called(1);
     expect(prefs.getBool(OnboardingController.hasOnboardedKey), isTrue);
   });
 
@@ -127,16 +139,27 @@ void main() {
     verify(() => notificationSettings.setEnabled(false)).called(1);
   });
 
-  test('skip to notifications preselects declined reminders', () async {
+  test('updates telemetry choices', () {
     final controller = buildController();
 
-    await controller.skipToNotifications();
+    controller.setAnalyticsConsent(false);
+    controller.setCrashConsent(false);
 
-    expect(controller.state.pageIndex, 2);
-    expect(
-      controller.state.permissionStatus,
-      NotificationPermissionStatus.denied,
-    );
+    expect(controller.state.analyticsConsent, isFalse);
+    expect(controller.state.crashConsent, isFalse);
+  });
+
+  test('skip onboarding records defaults and flags completion', () async {
+    final controller = buildController();
+    controller.toggleHabit(starterHabitTemplates.first, 'Meditate');
+
+    final result = await controller.skipOnboarding();
+
+    expect(result, isTrue);
+    expect(prefs.getBool(OnboardingController.hasOnboardedKey), isTrue);
+    verify(() => habitsRepository.saveHabit(any())).called(1);
     verify(() => notificationSettings.setEnabled(false)).called(1);
+    verify(() => telemetryController.updateAnalyticsConsent(true)).called(1);
+    verify(() => telemetryController.updateCrashConsent(true)).called(1);
   });
 }

@@ -217,7 +217,13 @@ void main() {
     final fab = find.byType(FloatingActionButton);
     expect(fab, findsOneWidget);
     await tester.tap(fab);
-    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Back'), findsOneWidget);
+
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.homeTodayTitle), findsOneWidget);
   });
 
   testWidgets('shows not found page for unknown routes', (

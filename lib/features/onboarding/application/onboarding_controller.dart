@@ -6,6 +6,8 @@ import '../../habits/domain/domain.dart';
 import '../../settings/application/controllers/notification_settings_controller.dart';
 import '../../settings/application/providers/notification_settings_provider.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/telemetry/controllers/telemetry_controller.dart';
+import '../../../core/telemetry/providers/telemetry_provider.dart';
 import 'onboarding_state.dart';
 import 'starter_habit_template.dart';
 
@@ -14,10 +16,12 @@ class OnboardingController extends StateNotifier<OnboardingState> {
     required HabitsRepository habitsRepository,
     required NotificationService notificationService,
     required NotificationSettingsController notificationSettings,
+    required TelemetryController telemetryController,
     SharedPreferences? preferences,
   }) : _habitsRepository = habitsRepository,
        _notificationService = notificationService,
        _notificationSettings = notificationSettings,
+       _telemetryController = telemetryController,
        _providedPrefs = preferences,
        super(const OnboardingState());
 
@@ -26,6 +30,7 @@ class OnboardingController extends StateNotifier<OnboardingState> {
   final HabitsRepository _habitsRepository;
   final NotificationService _notificationService;
   final NotificationSettingsController _notificationSettings;
+  final TelemetryController _telemetryController;
   final SharedPreferences? _providedPrefs;
 
   SharedPreferences? _prefs;
@@ -39,11 +44,26 @@ class OnboardingController extends StateNotifier<OnboardingState> {
     state = state.copyWith(pageIndex: index);
   }
 
-  Future<void> skipToNotifications() async {
-    if (state.permissionStatus == NotificationPermissionStatus.idle) {
-      await declineNotifications();
+  Future<bool> skipOnboarding() async {
+    if (state.isSaving) return false;
+    state = state.copyWith(isSaving: true, errorMessage: null);
+
+    try {
+      await _createSelectedHabits();
+      await _notificationSettings.setEnabled(false);
+      state = state.copyWith(
+        permissionStatus: NotificationPermissionStatus.denied,
+        errorMessage: null,
+      );
+      await _applyTelemetryConsent();
+      final prefs = await _prefsInstance();
+      await prefs.setBool(hasOnboardedKey, true);
+      state = state.copyWith(isSaving: false);
+      return true;
+    } catch (error) {
+      state = state.copyWith(isSaving: false, errorMessage: error.toString());
+      return false;
     }
-    setPageIndex(2);
   }
 
   void toggleHabit(StarterHabitTemplate template, String label) {
@@ -60,6 +80,16 @@ class OnboardingController extends StateNotifier<OnboardingState> {
 
     current[template.id] = label;
     state = state.copyWith(selectedHabits: current);
+  }
+
+  void setAnalyticsConsent(bool value) {
+    if (state.analyticsConsent == value) return;
+    state = state.copyWith(analyticsConsent: value);
+  }
+
+  void setCrashConsent(bool value) {
+    if (state.crashConsent == value) return;
+    state = state.copyWith(crashConsent: value);
   }
 
   Future<void> enableNotifications() async {
@@ -98,6 +128,7 @@ class OnboardingController extends StateNotifier<OnboardingState> {
 
     try {
       await _createSelectedHabits();
+      await _applyTelemetryConsent();
       final prefs = await _prefsInstance();
       await prefs.setBool(hasOnboardedKey, true);
       state = state.copyWith(isSaving: false);
@@ -135,6 +166,12 @@ class OnboardingController extends StateNotifier<OnboardingState> {
       await _habitsRepository.saveHabit(habit);
     }
   }
+
+  Future<void> _applyTelemetryConsent() async {
+    await _telemetryController
+        .updateAnalyticsConsent(state.analyticsConsent);
+    await _telemetryController.updateCrashConsent(state.crashConsent);
+  }
 }
 
 final onboardingControllerProvider =
@@ -142,10 +179,12 @@ final onboardingControllerProvider =
       final habitsRepository = ref.watch(habitsRepositoryProvider);
       final notificationService = ref.watch(notificationServiceProvider);
       final notificationSettings = ref.watch(notificationSettingsProvider);
+      final telemetryController = ref.watch(telemetryControllerProvider);
 
       return OnboardingController(
         habitsRepository: habitsRepository,
         notificationService: notificationService,
         notificationSettings: notificationSettings,
+        telemetryController: telemetryController,
       );
     });
