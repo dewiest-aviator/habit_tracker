@@ -1,20 +1,18 @@
 import 'dart:async';
-import 'dart:html' as html;
+import 'dart:js_interop';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
-import 'package:js/js.dart';
 
-///
 /// The plugin class for the web, acts as the plugin inside bits
 /// and connects to the js world.
-///
 class FlutterNativeTimezonePlugin {
   static void registerWith(Registrar registrar) {
     final MethodChannel channel = MethodChannel(
-        'flutter_native_timezone',
-        const StandardMethodCodec(),
-        registrar.messenger);
+      'flutter_native_timezone',
+      const StandardMethodCodec(),
+      registrar,
+    );
     final FlutterNativeTimezonePlugin instance = FlutterNativeTimezonePlugin();
     channel.setMethodCallHandler(instance.handleMethodCall);
   }
@@ -24,37 +22,59 @@ class FlutterNativeTimezonePlugin {
       case 'getLocalTimezone':
         return _getLocalTimeZone();
       case 'getAvailableTimezones':
-        return [ _getLocalTimeZone() ];
+        return <String>[_getLocalTimeZone()];
       default:
         throw PlatformException(
-            code: 'Unimplemented',
-            details: "The flutter_native_timezone plugin for web doesn't implement "
-                "the method '${call.method}'");
+          code: 'Unimplemented',
+          details:
+              "The flutter_native_timezone plugin for web doesn't implement the method '${call.method}'",
+        );
     }
   }
 
   /// Platform-specific implementation of determining the user's
   /// local time zone when running on the web.
-  ///
   String _getLocalTimeZone() {
-    return jsDateTimeFormat()
-        .resolvedOptions()
-        .timeZone;
+    try {
+      final JSIntl? intl = _intl;
+      if (intl == null) {
+        return 'UTC';
+      }
+      final JSDateTimeFormat Function() factory = intl.dateTimeFormat;
+      final JSResolvedOptions resolvedOptions = factory().resolvedOptions();
+      final JSString? timeZone = resolvedOptions.timeZone;
+      final String? resolved = timeZone?.toDart;
+      return (resolved == null || resolved.isEmpty) ? 'UTC' : resolved;
+    } catch (_) {
+      return 'UTC';
+    }
   }
 }
 
-@JS('Intl.DateTimeFormat')
-external _JSDateTimeFormat jsDateTimeFormat();
+@JS('Intl')
+external JSIntl? get _intl;
 
 @JS()
-abstract class _JSDateTimeFormat {
-  @JS()
-  external _JSResolvedOptions resolvedOptions();
+@staticInterop
+class JSIntl {}
+
+extension JSIntlBindings on JSIntl {
+  @JS('DateTimeFormat')
+  external JSDateTimeFormat Function() get dateTimeFormat;
 }
 
 @JS()
-abstract class _JSResolvedOptions {
-  @JS()
-  external String get timeZone;
+@staticInterop
+class JSDateTimeFormat {}
+
+extension JSDateTimeFormatBindings on JSDateTimeFormat {
+  external JSResolvedOptions resolvedOptions();
 }
 
+@JS()
+@staticInterop
+class JSResolvedOptions {}
+
+extension JSResolvedOptionsBindings on JSResolvedOptions {
+  external JSString? get timeZone;
+}

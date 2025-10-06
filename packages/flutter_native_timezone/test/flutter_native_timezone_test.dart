@@ -4,17 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-    
+
   const MethodChannel channel = MethodChannel('flutter_native_timezone');
+  final TestDefaultBinaryMessenger messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
 
   setUp(() {
-    channel.setMockMethodCallHandler((MethodCall methodCall) async {
+    messenger.setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       return '42';
     });
   });
 
   tearDown(() {
-    channel.setMockMethodCallHandler(null);
+    messenger.setMockMethodCallHandler(channel, null);
   });
 
   test('getLocalTimezone', () async {
