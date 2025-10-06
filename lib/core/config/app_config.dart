@@ -25,7 +25,6 @@ class AppConfig {
       case AppEnv.staging:
         return ' • STG';
       case AppEnv.dev:
-      default:
         return ' • DEV';
     }
   }
