@@ -9,6 +9,7 @@ import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.da
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
 import 'package:habit_tracker/features/habits/data/repositories/habits_repository.dart';
 import 'package:habit_tracker/features/habits/domain/entities/habit.dart';
+import 'package:habit_tracker/features/onboarding/application/onboarding_analytics.dart';
 import 'package:habit_tracker/features/onboarding/application/onboarding_controller.dart';
 import 'package:habit_tracker/features/onboarding/application/onboarding_state.dart';
 import 'package:habit_tracker/features/onboarding/application/starter_habit_template.dart';
@@ -18,6 +19,41 @@ import 'package:habit_tracker/features/settings/application/providers/notificati
 class _MockHabitsRepository extends Mock implements HabitsRepository {}
 
 class _MockNotificationService extends Mock implements NotificationService {}
+
+class _StubOnboardingAnalytics extends OnboardingAnalytics {
+  const _StubOnboardingAnalytics();
+
+  @override
+  Future<void> logPageView(int index) async {}
+
+  @override
+  Future<void> logGetStartedTap() async {}
+
+  @override
+  Future<void> logSkip() async {}
+
+  @override
+  Future<void> logHabitToggle(
+    StarterHabitTemplate template,
+    String label,
+    bool selected,
+  ) async {}
+
+  @override
+  Future<void> logNotificationsRequest({required bool granted}) async {}
+
+  @override
+  Future<void> logNotificationsDeclined() async {}
+
+  @override
+  Future<void> logComplete({required int selectedCount}) async {}
+
+  @override
+  Future<void> logConsentUpdate({
+    required String channel,
+    required bool granted,
+  }) async {}
+}
 
 void main() {
   late ProviderContainer container;
@@ -50,8 +86,9 @@ void main() {
     notificationService = _MockNotificationService();
 
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
-    when(() => notificationService.requestPermission())
-        .thenAnswer((_) async => true);
+    when(
+      () => notificationService.requestPermission(),
+    ).thenAnswer((_) async => true);
 
     container = ProviderContainer(
       overrides: [
@@ -65,13 +102,14 @@ void main() {
         ),
         telemetryControllerProvider.overrideWith(TelemetryController.new),
         onboardingPreferencesProvider.overrideWithValue(prefs),
+        onboardingAnalyticsProvider.overrideWithValue(
+          const _StubOnboardingAnalytics(),
+        ),
       ],
     );
 
     await container.read(telemetryControllerProvider.notifier).initialize();
-    await container
-        .read(notificationSettingsProvider.notifier)
-        .load();
+    await container.read(notificationSettingsProvider.notifier).load();
   });
 
   tearDown(() {
@@ -128,8 +166,9 @@ void main() {
   });
 
   test('handles platform denial when enabling reminders', () async {
-    when(() => notificationService.requestPermission())
-        .thenAnswer((_) async => false);
+    when(
+      () => notificationService.requestPermission(),
+    ).thenAnswer((_) async => false);
     final ctrl = controller();
 
     await ctrl.enableNotifications();

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:habit_tracker/core/localization/l10n_extensions.dart';
 import 'package:habit_tracker/features/habits/application/habit_form_controller.dart';
+import 'package:habit_tracker/features/habits/application/home_analytics.dart';
 import 'package:habit_tracker/features/habits/application/home_controller.dart';
 import 'package:habit_tracker/features/habits/application/home_state.dart';
 import 'package:habit_tracker/features/habits/presentation/widgets/habit_card.dart';
@@ -18,12 +19,23 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final analytics = ref.read(homeAnalyticsProvider);
+
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
       if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+
+      final wasLoading = previous?.isLoading ?? true;
+      if (wasLoading && !next.isLoading) {
+        analytics.logView(
+          totalHabits: next.habits.length,
+          completedHabits: next.completedCount,
+          isEmpty: next.isEmpty,
+        );
       }
     });
 
@@ -34,7 +46,10 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.homeTodayTitle)),
       body: RefreshIndicator(
-        onRefresh: () => notifier.refresh(),
+        onRefresh: () async {
+          analytics.logRefresh(state);
+          await notifier.refresh();
+        },
         child: _HomeBody(
           state: state,
           onToggleHabit: (habit) => _handleToggle(context, ref, habit),
@@ -46,12 +61,14 @@ class HomeScreen extends ConsumerWidget {
           : FloatingActionButton(
               onPressed: () async {
                 if (!state.canAddHabit) {
+                  analytics.logAddHabitLimitReached(state.habits.length);
                   final message = l10n.habitFormLimitError;
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
                     ..showSnackBar(SnackBar(content: Text(message)));
                   return;
                 }
+                analytics.logAddHabitTap();
                 final result = await context.pushNamed('habit_form');
                 if (!context.mounted) return;
                 _handleFormResult(context, result);
@@ -75,6 +92,9 @@ class HomeScreen extends ConsumerWidget {
       return;
     }
 
+    final analytics = ref.read(homeAnalyticsProvider);
+    analytics.logToggle(habit.habit, result);
+
     final message = result
         ? context.l10n.homeCompletionSnackbar(habit.habit.name)
         : context.l10n.homeUndoSnackbar(habit.habit.name);
@@ -93,6 +113,8 @@ class HomeScreen extends ConsumerWidget {
     WidgetRef ref,
     HomeHabitViewData habit,
   ) async {
+    final analytics = ref.read(homeAnalyticsProvider);
+    analytics.logHabitActionsOpen(habit.habit);
     final action = await showModalBottomSheet<_HabitAction>(
       context: context,
       showDragHandle: true,
@@ -110,6 +132,7 @@ class HomeScreen extends ConsumerWidget {
 
     switch (action) {
       case _HabitAction.edit:
+        analytics.logHabitActionSelected(habit.habit, action: 'edit');
         final result = await context.pushNamed(
           'habit_form',
           extra: habit.habit.id,
@@ -119,6 +142,7 @@ class HomeScreen extends ConsumerWidget {
         break;
       case _HabitAction.undo:
         if (habit.isCompleted) {
+          analytics.logHabitActionSelected(habit.habit, action: 'undo');
           await _handleToggle(context, ref, habit);
         }
         break;
