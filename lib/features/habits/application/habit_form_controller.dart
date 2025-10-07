@@ -162,47 +162,54 @@ final habitFormAnalyticsProvider = Provider<HabitFormAnalytics>((ref) {
   return const HabitFormAnalytics();
 });
 
-class HabitFormController extends StateNotifier<HabitFormState> {
-  HabitFormController({
-    required HabitsRepository habitsRepository,
-    required HabitEntriesRepository habitEntriesRepository,
-    required NotificationService notificationService,
-    required HabitFormAnalytics analytics,
-    String? habitId,
-    DateTime Function()? clock,
-    Uuid? uuid,
-  }) : _habitsRepository = habitsRepository,
-       _habitEntriesRepository = habitEntriesRepository,
-       _notificationService = notificationService,
-       _analytics = analytics,
-       _habitId = habitId,
-       _clock = clock ?? DateTime.now,
-       _uuid = uuid ?? const Uuid(),
-       super(
-         HabitFormState.initial(
-           mode: habitId == null ? HabitFormMode.create : HabitFormMode.edit,
-         ).copyWith(habitId: habitId),
-       ) {
-    _baseline = _snapshotFromState(state);
-    if (habitId == null) {
-      unawaited(
-        _analytics.logView(mode: HabitFormMode.create, prefilled: false),
-      );
-    } else {
-      unawaited(_loadHabit(habitId));
-    }
-  }
+class HabitFormController extends Notifier<HabitFormState> {
+  HabitFormController(this._habitId);
 
-  final HabitsRepository _habitsRepository;
-  final HabitEntriesRepository _habitEntriesRepository;
-  final NotificationService _notificationService;
-  final HabitFormAnalytics _analytics;
   final String? _habitId;
-  final DateTime Function() _clock;
-  final Uuid _uuid;
+
+  late final HabitsRepository _habitsRepository;
+  late final HabitEntriesRepository _habitEntriesRepository;
+  late final NotificationService _notificationService;
+  late final HabitFormAnalytics _analytics;
+  late final DateTime Function() _clock;
+  late final Uuid _uuid;
 
   Habit? _loadedHabit;
   _HabitFormSnapshot _baseline = _HabitFormSnapshot();
+
+  @override
+  HabitFormState build() {
+    _habitsRepository = ref.read(habitsRepositoryProvider);
+    _habitEntriesRepository = ref.read(habitEntriesRepositoryProvider);
+    _notificationService = ref.read(notificationServiceProvider);
+    _analytics = ref.read(habitFormAnalyticsProvider);
+    _clock = ref.read(habitFormClockProvider);
+    _uuid = ref.read(habitFormUuidProvider);
+
+    final mode = _habitId == null ? HabitFormMode.create : HabitFormMode.edit;
+    final initialState = HabitFormState.initial(mode: mode)
+        .copyWith(habitId: _habitId);
+    _baseline = _snapshotFromState(initialState);
+
+    if (_habitId == null) {
+      Future<void>.microtask(() {
+        if (!ref.mounted) return;
+        unawaited(
+          _analytics.logView(mode: HabitFormMode.create, prefilled: false),
+        );
+      });
+    } else {
+      Future<void>.microtask(() {
+        // _habitId is non-null in this branch.
+        // ignore: unnecessary_non_null_assertion
+        final habitId = _habitId!;
+        if (!ref.mounted) return;
+        unawaited(_loadHabit(habitId));
+      });
+    }
+
+    return initialState;
+  }
 
   void setEmoji(String value) {
     final trimmed = value.trim();
@@ -695,18 +702,15 @@ class _HabitFormSnapshot {
   );
 }
 
-final habitFormControllerProvider = StateNotifierProvider.autoDispose
-    .family<HabitFormController, HabitFormState, String?>((ref, habitId) {
-      final habitsRepository = ref.watch(habitsRepositoryProvider);
-      final habitEntriesRepository = ref.watch(habitEntriesRepositoryProvider);
-      final notificationService = ref.watch(notificationServiceProvider);
-      final analytics = ref.watch(habitFormAnalyticsProvider);
+final habitFormClockProvider = Provider<DateTime Function()>((ref) {
+  return DateTime.now;
+});
 
-      return HabitFormController(
-        habitsRepository: habitsRepository,
-        habitEntriesRepository: habitEntriesRepository,
-        notificationService: notificationService,
-        analytics: analytics,
-        habitId: habitId,
-      );
+final habitFormUuidProvider = Provider<Uuid>((ref) {
+  return const Uuid();
+});
+
+final habitFormControllerProvider = NotifierProvider.autoDispose
+    .family<HabitFormController, HabitFormState, String?>((habitId) {
+      return HabitFormController(habitId);
     });

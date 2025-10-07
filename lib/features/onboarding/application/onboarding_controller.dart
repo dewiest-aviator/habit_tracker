@@ -11,32 +11,30 @@ import '../../../core/telemetry/providers/telemetry_provider.dart';
 import 'onboarding_state.dart';
 import 'starter_habit_template.dart';
 
-class OnboardingController extends StateNotifier<OnboardingState> {
-  OnboardingController({
-    required HabitsRepository habitsRepository,
-    required NotificationService notificationService,
-    required NotificationSettingsController notificationSettings,
-    required TelemetryController telemetryController,
-    SharedPreferences? preferences,
-  }) : _habitsRepository = habitsRepository,
-       _notificationService = notificationService,
-       _notificationSettings = notificationSettings,
-       _telemetryController = telemetryController,
-       _providedPrefs = preferences,
-       super(const OnboardingState());
+class OnboardingController extends Notifier<OnboardingState> {
+  late final HabitsRepository _habitsRepository;
+  late final NotificationService _notificationService;
+  late final NotificationSettingsController _notificationSettings;
+  late final TelemetryController _telemetryController;
+  late final SharedPreferences? _providedPrefs;
 
   static const hasOnboardedKey = 'has_onboarded';
-
-  final HabitsRepository _habitsRepository;
-  final NotificationService _notificationService;
-  final NotificationSettingsController _notificationSettings;
-  final TelemetryController _telemetryController;
-  final SharedPreferences? _providedPrefs;
 
   SharedPreferences? _prefs;
 
   Future<SharedPreferences> _prefsInstance() async {
     return _prefs ??= _providedPrefs ?? await SharedPreferences.getInstance();
+  }
+
+  @override
+  OnboardingState build() {
+    _habitsRepository = ref.read(habitsRepositoryProvider);
+    _notificationService = ref.read(notificationServiceProvider);
+    _notificationSettings = ref.read(notificationSettingsProvider.notifier);
+    _telemetryController = ref.read(telemetryControllerProvider.notifier);
+    _providedPrefs = ref.read(onboardingPreferencesProvider);
+
+    return const OnboardingState();
   }
 
   void setPageIndex(int index) {
@@ -174,17 +172,11 @@ class OnboardingController extends StateNotifier<OnboardingState> {
   }
 }
 
-final onboardingControllerProvider =
-    StateNotifierProvider<OnboardingController, OnboardingState>((ref) {
-      final habitsRepository = ref.watch(habitsRepositoryProvider);
-      final notificationService = ref.watch(notificationServiceProvider);
-      final notificationSettings = ref.watch(notificationSettingsProvider);
-      final telemetryController = ref.watch(telemetryControllerProvider);
+final onboardingPreferencesProvider = Provider<SharedPreferences?>((ref) {
+  return null;
+});
 
-      return OnboardingController(
-        habitsRepository: habitsRepository,
-        notificationService: notificationService,
-        notificationSettings: notificationSettings,
-        telemetryController: telemetryController,
-      );
-    });
+final onboardingControllerProvider =
+    NotifierProvider<OnboardingController, OnboardingState>(
+      OnboardingController.new,
+    );

@@ -1,31 +1,29 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:habit_tracker/core/services/consent_service.dart';
+import 'package:habit_tracker/core/services/notification_service.dart';
+import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
+import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
+import 'package:habit_tracker/features/habits/data/repositories/habits_repository.dart';
+import 'package:habit_tracker/features/habits/domain/entities/habit.dart';
 import 'package:habit_tracker/features/onboarding/application/onboarding_controller.dart';
 import 'package:habit_tracker/features/onboarding/application/onboarding_state.dart';
 import 'package:habit_tracker/features/onboarding/application/starter_habit_template.dart';
-import 'package:habit_tracker/features/habits/data/repositories/habits_repository.dart';
-import 'package:habit_tracker/features/habits/domain/entities/habit.dart';
 import 'package:habit_tracker/features/settings/application/controllers/notification_settings_controller.dart';
-import 'package:habit_tracker/core/services/notification_service.dart';
-import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
+import 'package:habit_tracker/features/settings/application/providers/notification_settings_provider.dart';
 
 class _MockHabitsRepository extends Mock implements HabitsRepository {}
 
 class _MockNotificationService extends Mock implements NotificationService {}
 
-class _MockNotificationSettingsController extends Mock
-    implements NotificationSettingsController {}
-
-class _MockTelemetryController extends Mock implements TelemetryController {}
-
 void main() {
+  late ProviderContainer container;
+  late SharedPreferences prefs;
   late _MockHabitsRepository habitsRepository;
   late _MockNotificationService notificationService;
-  late _MockNotificationSettingsController notificationSettings;
-  late _MockTelemetryController telemetryController;
-  late SharedPreferences prefs;
 
   setUpAll(() {
     registerFallbackValue(
@@ -46,120 +44,145 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
+    await ConsentService.reset();
+
     habitsRepository = _MockHabitsRepository();
     notificationService = _MockNotificationService();
-    notificationSettings = _MockNotificationSettingsController();
-    telemetryController = _MockTelemetryController();
 
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
-    when(() => notificationSettings.setEnabled(any())).thenAnswer((_) async {});
-    when(
-      () => notificationService.requestPermission(),
-    ).thenAnswer((_) async => true);
-    when(() => telemetryController.updateAnalyticsConsent(any()))
-        .thenAnswer((_) async {});
-    when(() => telemetryController.updateCrashConsent(any()))
-        .thenAnswer((_) async {});
+    when(() => notificationService.requestPermission())
+        .thenAnswer((_) async => true);
+
+    container = ProviderContainer(
+      overrides: [
+        habitsRepositoryProvider.overrideWithValue(habitsRepository),
+        notificationServiceProvider.overrideWithValue(notificationService),
+        notificationSettingsProvider.overrideWith(
+          () => NotificationSettingsController(preferences: prefs),
+        ),
+        telemetryConfigProvider.overrideWithValue(
+          const TelemetryConfig(enableFirebase: false),
+        ),
+        telemetryControllerProvider.overrideWith(TelemetryController.new),
+        onboardingPreferencesProvider.overrideWithValue(prefs),
+      ],
+    );
+
+    await container.read(telemetryControllerProvider.notifier).initialize();
+    await container
+        .read(notificationSettingsProvider.notifier)
+        .load();
   });
 
-  OnboardingController buildController() {
-    return OnboardingController(
-      habitsRepository: habitsRepository,
-      notificationService: notificationService,
-      notificationSettings: notificationSettings,
-      telemetryController: telemetryController,
-      preferences: prefs,
-    );
-  }
+  tearDown(() {
+    container.dispose();
+  });
+
+  OnboardingController controller() =>
+      container.read(onboardingControllerProvider.notifier);
+
+  OnboardingState state() => container.read(onboardingControllerProvider);
 
   test('limits starter habit selection to three items', () {
-    final controller = buildController();
+    final ctrl = controller();
 
-    controller.toggleHabit(starterHabitTemplates[0], 'Meditate');
-    controller.toggleHabit(starterHabitTemplates[1], 'Walk');
-    controller.toggleHabit(starterHabitTemplates[2], 'Drink water');
-    controller.toggleHabit(starterHabitTemplates[3], 'Journal');
+    ctrl.toggleHabit(starterHabitTemplates[0], 'Meditate');
+    ctrl.toggleHabit(starterHabitTemplates[1], 'Walk');
+    ctrl.toggleHabit(starterHabitTemplates[2], 'Drink water');
+    ctrl.toggleHabit(starterHabitTemplates[3], 'Journal');
 
-    expect(controller.state.selectedHabits.length, 3);
-    expect(controller.state.selectedHabits.containsKey('journal'), isFalse);
+    final current = state().selectedHabits;
+    expect(current.length, 3);
+    expect(current.containsKey('journal'), isFalse);
   });
 
   test('persists selected habits and sets onboarding flag', () async {
-    final controller = buildController();
-    controller.toggleHabit(starterHabitTemplates[0], 'Meditate');
-    controller.toggleHabit(starterHabitTemplates[1], 'Walk');
+    final ctrl = controller();
+    ctrl.toggleHabit(starterHabitTemplates[0], 'Meditate');
+    ctrl.toggleHabit(starterHabitTemplates[1], 'Walk');
 
-    final result = await controller.completeOnboarding();
+    final result = await ctrl.completeOnboarding();
 
     expect(result, isTrue);
     verify(() => habitsRepository.saveHabit(any())).called(2);
-    verify(() => telemetryController.updateAnalyticsConsent(true)).called(1);
-    verify(() => telemetryController.updateCrashConsent(true)).called(1);
+
+    final telemetryState = container.read(telemetryControllerProvider);
+    expect(telemetryState.analyticsConsent, isTrue);
+    expect(telemetryState.crashConsent, isTrue);
     expect(prefs.getBool(OnboardingController.hasOnboardedKey), isTrue);
   });
 
   test('updates permission status when enabling reminders', () async {
-    final controller = buildController();
+    final ctrl = controller();
 
-    await controller.enableNotifications();
+    await ctrl.enableNotifications();
 
+    final onboardingState = state();
     expect(
-      controller.state.permissionStatus,
+      onboardingState.permissionStatus,
       NotificationPermissionStatus.granted,
     );
-    verify(() => notificationSettings.setEnabled(true)).called(1);
+    final notifSettings = container.read(notificationSettingsProvider);
+    expect(notifSettings.enabled, isTrue);
     verify(() => notificationService.requestPermission()).called(1);
   });
 
   test('handles platform denial when enabling reminders', () async {
-    when(
-      () => notificationService.requestPermission(),
-    ).thenAnswer((_) async => false);
-    final controller = buildController();
+    when(() => notificationService.requestPermission())
+        .thenAnswer((_) async => false);
+    final ctrl = controller();
 
-    await controller.enableNotifications();
+    await ctrl.enableNotifications();
 
+    final onboardingState = state();
     expect(
-      controller.state.permissionStatus,
+      onboardingState.permissionStatus,
       NotificationPermissionStatus.denied,
     );
-    verify(() => notificationSettings.setEnabled(false)).called(1);
-    verify(() => notificationService.requestPermission()).called(1);
+    final notifSettings = container.read(notificationSettingsProvider);
+    expect(notifSettings.enabled, isFalse);
   });
 
   test('declining reminders disables notifications', () async {
-    final controller = buildController();
+    final ctrl = controller();
 
-    await controller.declineNotifications();
+    await ctrl.declineNotifications();
 
+    final onboardingState = state();
     expect(
-      controller.state.permissionStatus,
+      onboardingState.permissionStatus,
       NotificationPermissionStatus.denied,
     );
-    verify(() => notificationSettings.setEnabled(false)).called(1);
+    final notifSettings = container.read(notificationSettingsProvider);
+    expect(notifSettings.enabled, isFalse);
   });
 
   test('updates telemetry choices', () {
-    final controller = buildController();
+    final ctrl = controller();
 
-    controller.setAnalyticsConsent(false);
-    controller.setCrashConsent(false);
+    ctrl.setAnalyticsConsent(false);
+    ctrl.setCrashConsent(false);
 
-    expect(controller.state.analyticsConsent, isFalse);
-    expect(controller.state.crashConsent, isFalse);
+    final updated = state();
+    expect(updated.analyticsConsent, isFalse);
+    expect(updated.crashConsent, isFalse);
   });
 
   test('skip onboarding records defaults and flags completion', () async {
-    final controller = buildController();
-    controller.toggleHabit(starterHabitTemplates.first, 'Meditate');
+    final ctrl = controller();
+    ctrl.toggleHabit(starterHabitTemplates.first, 'Meditate');
 
-    final result = await controller.skipOnboarding();
+    final result = await ctrl.skipOnboarding();
 
     expect(result, isTrue);
     expect(prefs.getBool(OnboardingController.hasOnboardedKey), isTrue);
     verify(() => habitsRepository.saveHabit(any())).called(1);
-    verify(() => notificationSettings.setEnabled(false)).called(1);
-    verify(() => telemetryController.updateAnalyticsConsent(true)).called(1);
-    verify(() => telemetryController.updateCrashConsent(true)).called(1);
+
+    final telemetryState = container.read(telemetryControllerProvider);
+    expect(telemetryState.analyticsConsent, isTrue);
+    expect(telemetryState.crashConsent, isTrue);
+
+    final notifSettings = container.read(notificationSettingsProvider);
+    expect(notifSettings.enabled, isFalse);
   });
 }

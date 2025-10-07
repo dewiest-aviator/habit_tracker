@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -90,17 +91,19 @@ class NotificationService {
 
     for (final day in days) {
       final scheduleDate = _nextInstanceForDay(day, reminderTime);
-      await _plugin.zonedSchedule(
-        _notificationIdForHabit(habitId, day),
-        title,
-        body,
-        scheduleDate,
-        details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.wallClockTime,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      );
+      try {
+        await _plugin.zonedSchedule(
+          _notificationIdForHabit(habitId, day),
+          title,
+          body,
+          scheduleDate,
+          details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
+      } on PlatformException catch (_) {
+        rethrow;
+      }
     }
   }
 
@@ -130,7 +133,7 @@ class NotificationService {
 
   static Future<String> _defaultTimeZoneNameProvider() async {
     try {
-      return await FlutterNativeTimezone.getLocalTimezone();
+      return await FlutterTimezone.getLocalTimezone();
     } catch (_) {
       return 'UTC';
     }
