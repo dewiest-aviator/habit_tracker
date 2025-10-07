@@ -94,6 +94,39 @@ class AppLocalizationsFr extends AppLocalizations {
       'Votre historique de séries apparaîtra bientôt ici.';
 
   @override
+  String get historyEmptyTitle => 'Aucun historique pour le moment';
+
+  @override
+  String get historyEmptyMessage =>
+      'Terminez vos habitudes pour construire votre chronologie.';
+
+  @override
+  String get historyEmptyCta => 'Commencez à suivre aujourd\'hui !';
+
+  @override
+  String get historyFilterLabel => 'Filtrer par habitude';
+
+  @override
+  String get historyFilterAll => 'Toutes les habitudes';
+
+  @override
+  String get historyStreakHeading => 'Résumé des séries';
+
+  @override
+  String get historyStreakBest => 'Meilleure série';
+
+  @override
+  String get historyStreakCurrent => 'Série en cours';
+
+  @override
+  String historyCompletionLabel(int completed, int total) {
+    return '$completed sur $total accomplies';
+  }
+
+  @override
+  String get historyNoHabitsForDay => 'Aucune habitude prévue ce jour-là.';
+
+  @override
   String get habitFormCreateTitle => 'Créer une habitude';
 
   @override

@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/utils/date_helpers.dart';
 import '../data/repositories/habit_entries_repository.dart';
 import '../data/repositories/habits_repository.dart';
 import '../domain/domain.dart';
@@ -187,8 +188,9 @@ class HabitFormController extends Notifier<HabitFormState> {
     _uuid = ref.read(habitFormUuidProvider);
 
     final mode = _habitId == null ? HabitFormMode.create : HabitFormMode.edit;
-    final initialState = HabitFormState.initial(mode: mode)
-        .copyWith(habitId: _habitId);
+    final initialState = HabitFormState.initial(
+      mode: mode,
+    ).copyWith(habitId: _habitId);
     _baseline = _snapshotFromState(initialState);
 
     if (_habitId == null) {
@@ -361,10 +363,7 @@ class HabitFormController extends Notifier<HabitFormState> {
         isNew: previousMode == HabitFormMode.create,
       );
     } catch (error) {
-      await _analytics.logSaveFail(
-        mode: previousMode,
-        errorCode: 'exception',
-      );
+      await _analytics.logSaveFail(mode: previousMode, errorCode: 'exception');
       _emit(state.copyWith(isSaving: false, errorMessage: error.toString()));
       return HabitFormSaveResult.failure(message: error.toString());
     }
@@ -442,6 +441,7 @@ class HabitFormController extends Notifier<HabitFormState> {
       reminderTime: state.reminderEnabled ? state.reminderTime : '',
       bestStreak: existing?.bestStreak ?? 0,
       currentStreak: existing?.currentStreak ?? 0,
+      createdAt: existing?.createdAt ?? DateHelpers.startOfDay(_clock()),
       lastChecked: existing?.lastChecked,
     );
 

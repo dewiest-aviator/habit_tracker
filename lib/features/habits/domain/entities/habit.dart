@@ -13,12 +13,14 @@ class Habit {
     required this.reminderTime,
     required this.bestStreak,
     required this.currentStreak,
+    DateTime? createdAt,
     this.lastChecked,
   }) : assert(
          color >= 0 && color <= 0xFFFFFFFF,
          'color must be between 0x00000000 and 0xFFFFFFFF',
        ),
-       days = List.unmodifiable(_normalizeDays(days));
+       days = List.unmodifiable(_normalizeDays(days)),
+       createdAt = _normalizeCreationDate(createdAt ?? _defaultCreationDate);
 
   final String id;
   final String name;
@@ -29,7 +31,15 @@ class Habit {
   final String reminderTime;
   final int bestStreak;
   final int currentStreak;
+  final DateTime createdAt;
   final DateTime? lastChecked;
+
+  static final DateTime _defaultCreationDate =
+      DateTime.fromMillisecondsSinceEpoch(0);
+
+  static DateTime get defaultCreationDate => _defaultCreationDate;
+
+  bool get hasExplicitCreationDate => createdAt != _defaultCreationDate;
 
   Habit copyWith({
     String? id,
@@ -41,6 +51,7 @@ class Habit {
     String? reminderTime,
     int? bestStreak,
     int? currentStreak,
+    DateTime? createdAt,
     DateTime? lastChecked,
     bool clearLastChecked = false,
   }) {
@@ -54,6 +65,7 @@ class Habit {
       reminderTime: reminderTime ?? this.reminderTime,
       bestStreak: bestStreak ?? this.bestStreak,
       currentStreak: currentStreak ?? this.currentStreak,
+      createdAt: createdAt ?? this.createdAt,
       lastChecked: clearLastChecked ? null : (lastChecked ?? this.lastChecked),
     );
   }
@@ -69,6 +81,7 @@ class Habit {
       'reminderTime': reminderTime,
       'bestStreak': bestStreak,
       'currentStreak': currentStreak,
+      'createdAt': createdAt.toIso8601String(),
       'lastChecked': lastChecked?.toIso8601String(),
     };
   }
@@ -94,6 +107,7 @@ class Habit {
       ),
       bestStreak: _requireField(bestStreak, 'bestStreak'),
       currentStreak: _requireField(currentStreak, 'currentStreak'),
+      createdAt: _parseDate(map['createdAt']) ?? _defaultCreationDate,
       lastChecked: map['lastChecked'] == null
           ? null
           : DateTime.tryParse(map['lastChecked'] as String),
@@ -107,6 +121,12 @@ class Habit {
     return const <int>[];
   }
 
+  static DateTime? _parseDate(Object? value) {
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
   static T _requireField<T>(T? value, String field) {
     if (value == null) {
       throw ArgumentError.notNull(field);
@@ -118,6 +138,10 @@ class Habit {
     final cleaned = days.where((day) => day >= 0 && day <= 6).toSet().toList()
       ..sort();
     return cleaned;
+  }
+
+  static DateTime _normalizeCreationDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 
   List<HabitWeekday> get weekdaySelections => HabitWeekday.fromIndexList(days);
@@ -135,6 +159,7 @@ class Habit {
         other.reminderTime == reminderTime &&
         other.bestStreak == bestStreak &&
         other.currentStreak == currentStreak &&
+        other.createdAt == createdAt &&
         other.lastChecked == lastChecked;
   }
 
@@ -149,10 +174,11 @@ class Habit {
     reminderTime,
     bestStreak,
     currentStreak,
+    createdAt,
     lastChecked,
   );
 
   @override
   String toString() =>
-      'Habit(id: $id, name: $name, streak: $currentStreak/$bestStreak)';
+      'Habit(id: $id, name: $name, streak: $currentStreak/$bestStreak, createdAt: $createdAt)';
 }

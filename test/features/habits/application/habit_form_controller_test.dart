@@ -115,10 +115,12 @@ void main() {
     when(() => habitsRepository.countHabits()).thenAnswer((_) async => 0);
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
     when(() => habitsRepository.findById(any())).thenAnswer((_) async => null);
-    when(() => habitEntriesRepository.deleteEntriesForHabit(any()))
-        .thenAnswer((_) async {});
-    when(() => notificationService.cancelHabitReminder(any()))
-        .thenAnswer((_) async {});
+    when(
+      () => habitEntriesRepository.deleteEntriesForHabit(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => notificationService.cancelHabitReminder(any()),
+    ).thenAnswer((_) async {});
     when(
       () => notificationService.scheduleHabitReminder(
         habitId: any(named: 'habitId'),
@@ -128,8 +130,9 @@ void main() {
         time: any(named: 'time'),
       ),
     ).thenAnswer((_) async {});
-    when(() => notificationService.requestPermission())
-        .thenAnswer((_) async => true);
+    when(
+      () => notificationService.requestPermission(),
+    ).thenAnswer((_) async => true);
 
     container = ProviderContainer(
       overrides: [
@@ -184,8 +187,9 @@ void main() {
   });
 
   test('submit returns limit reached when at max habits', () async {
-    when(() => habitsRepository.countHabits())
-        .thenAnswer((_) async => HabitsRepository.maxHabitsPerDay);
+    when(
+      () => habitsRepository.countHabits(),
+    ).thenAnswer((_) async => HabitsRepository.maxHabitsPerDay);
     final controller = buildController();
 
     controller.setName('Drink water');
@@ -233,8 +237,9 @@ void main() {
       bestStreak: 0,
       currentStreak: 0,
     );
-    when(() => habitsRepository.findById('habit-1'))
-        .thenAnswer((_) async => habit);
+    when(
+      () => habitsRepository.findById('habit-1'),
+    ).thenAnswer((_) async => habit);
 
     final controller = buildController(habitId: habit.id);
     await settle();
@@ -246,15 +251,18 @@ void main() {
 
     expect(result.status, HabitFormSaveStatus.success);
     expect(result.isNew, isFalse);
-    verify(() => notificationService.cancelHabitReminder(habit.reminderId))
-        .called(1);
-    verify(() => notificationService.scheduleHabitReminder(
-          habitId: habit.reminderId,
-          title: any(named: 'title'),
-          body: any(named: 'body'),
-          days: any(named: 'days'),
-          time: any(named: 'time'),
-        )).called(1);
+    verify(
+      () => notificationService.cancelHabitReminder(habit.reminderId),
+    ).called(1);
+    verify(
+      () => notificationService.scheduleHabitReminder(
+        habitId: habit.reminderId,
+        title: any(named: 'title'),
+        body: any(named: 'body'),
+        days: any(named: 'days'),
+        time: any(named: 'time'),
+      ),
+    ).called(1);
   });
 
   test('deleteHabit cancels scheduled notifications', () async {
@@ -273,8 +281,9 @@ void main() {
     final deleteResult = await controller.deleteHabit();
 
     expect(deleteResult.status, HabitFormDeleteStatus.deleted);
-    verify(() => notificationService.cancelHabitReminder(result.habit!.reminderId))
-        .called(1);
+    verify(
+      () => notificationService.cancelHabitReminder(result.habit!.reminderId),
+    ).called(1);
   });
 
   test('hasChanges flag resets after successful save', () async {

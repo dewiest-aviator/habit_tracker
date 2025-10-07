@@ -32,6 +32,23 @@ class HabitEntriesRepository {
         .toList(growable: false);
   }
 
+  Future<List<HabitEntry>> fetchEntriesInRange(
+    DateTime start,
+    DateTime end, {
+    String? habitId,
+  }) async {
+    final normalizedStart = DateHelpers.startOfDay(start);
+    final normalizedEnd = DateHelpers.startOfDay(end);
+    final entries = await fetchEntries(habitId: habitId);
+    return entries
+        .where((entry) {
+          final entryDate = DateHelpers.startOfDay(entry.date);
+          return !entryDate.isBefore(normalizedStart) &&
+              !entryDate.isAfter(normalizedEnd);
+        })
+        .toList(growable: false);
+  }
+
   Future<void> saveEntry(HabitEntry entry) async {
     final box = _database.habitEntriesBox;
     final record = HabitEntryRecord.fromHabitEntry(entry);
@@ -83,6 +100,24 @@ class HabitEntriesRepository {
     return watchEntries().map(
       (entries) => entries
           .where((entry) => DateHelpers.isSameDay(entry.date, normalized))
+          .toList(growable: false),
+    );
+  }
+
+  Stream<List<HabitEntry>> watchEntriesInRange(
+    DateTime start,
+    DateTime end, {
+    String? habitId,
+  }) {
+    final normalizedStart = DateHelpers.startOfDay(start);
+    final normalizedEnd = DateHelpers.startOfDay(end);
+    return watchEntries(habitId: habitId).map(
+      (entries) => entries
+          .where((entry) {
+            final entryDate = DateHelpers.startOfDay(entry.date);
+            return !entryDate.isBefore(normalizedStart) &&
+                !entryDate.isAfter(normalizedEnd);
+          })
           .toList(growable: false),
     );
   }
