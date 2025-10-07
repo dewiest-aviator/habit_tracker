@@ -315,6 +315,38 @@ class AppLocalizationsFr extends AppLocalizations {
       'Recevez un rappel utile pour accomplir les habitudes du jour.';
 
   @override
+  String get settingsNotificationPermissionTitle =>
+      'Autorisation de notifications';
+
+  @override
+  String get settingsNotificationPermissionStatusGranted => 'Autorisé';
+
+  @override
+  String get settingsNotificationPermissionStatusDenied => 'Refusé';
+
+  @override
+  String get settingsNotificationPermissionStatusAsk => 'Autorisation requise';
+
+  @override
+  String get settingsNotificationPermissionStatusUnknown =>
+      'Statut indisponible';
+
+  @override
+  String get settingsNotificationPermissionActionRequest => 'Demander';
+
+  @override
+  String get settingsNotificationPermissionActionSettings =>
+      'Ouvrir les réglages';
+
+  @override
+  String get settingsNotificationPermissionGrantedMessage =>
+      'Les notifications sont activées.';
+
+  @override
+  String get settingsNotificationPermissionDeniedMessage =>
+      'Les notifications restent désactivées. Mettez à jour les réglages système pour les autoriser.';
+
+  @override
   String get settingsNotificationTimeTitle => 'Heure du rappel';
 
   @override
@@ -350,6 +382,30 @@ class AppLocalizationsFr extends AppLocalizations {
       'Toujours utiliser le thème sombre';
 
   @override
+  String get settingsTimeFormatLabel => 'Format de l\'heure';
+
+  @override
+  String get settingsTimeFormatOptionSystem => 'Comme l\'appareil';
+
+  @override
+  String get settingsTimeFormatOption12h => '12 heures';
+
+  @override
+  String get settingsTimeFormatOption24h => '24 heures';
+
+  @override
+  String get settingsTimeFormatDescriptionSystem =>
+      'Utiliser le format défini sur votre appareil.';
+
+  @override
+  String get settingsTimeFormatDescription12h =>
+      'Afficher les heures avec les indicateurs AM/PM.';
+
+  @override
+  String get settingsTimeFormatDescription24h =>
+      'Afficher les heures de 00:00 à 23:59.';
+
+  @override
   String get settingsLanguageSection => 'Langue';
 
   @override
@@ -383,6 +439,38 @@ class AppLocalizationsFr extends AppLocalizations {
   String get htmlThemeOptionDark => 'Sombre';
 
   @override
+  String get settingsSupportSection => 'Support';
+
+  @override
+  String get settingsRateApp => 'Noter Habit Tracker';
+
+  @override
+  String get settingsRateAppSubtitle =>
+      'Partagez votre avis et aidez d\'autres personnes à découvrir l\'app';
+
+  @override
+  String get settingsRateAppSuccess => 'Merci d\'avoir noté Habit Tracker !';
+
+  @override
+  String get settingsRateAppFailure =>
+      'Impossible d\'ouvrir la page d\'avis pour le moment.';
+
+  @override
+  String get settingsReportIssue => 'Signaler un problème';
+
+  @override
+  String get settingsReportIssueSubtitle =>
+      'Envoyez un e-mail d\'assistance avec un diagnostic joint';
+
+  @override
+  String get settingsReportIssueSuccess =>
+      'Rédaction d\'un e-mail d\'assistance.';
+
+  @override
+  String get settingsReportIssueFailure =>
+      'Impossible d\'ouvrir votre application e-mail. Réessayez plus tard.';
+
+  @override
   String get settingsAboutSection => 'À propos';
 
   @override
@@ -398,6 +486,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get settingsPrivacyPolicySubtitle =>
       'Comment nous traitons vos données';
+
+  @override
+  String get settingsLicenses => 'Licences open source';
+
+  @override
+  String get settingsLicensesSubtitle =>
+      'Consulter les licences des packages inclus';
 
   @override
   String settingsVersionLabel(String version, String build) {

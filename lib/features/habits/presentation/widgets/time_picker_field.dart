@@ -25,7 +25,10 @@ class TimePickerField extends StatelessWidget {
     final theme = Theme.of(context);
     final localizations = MaterialLocalizations.of(context);
     final parsed = _parseTime(value) ?? const TimeOfDay(hour: 8, minute: 0);
-    final formatted = localizations.formatTimeOfDay(parsed);
+    final formatted = localizations.formatTimeOfDay(
+      parsed,
+      alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,6 +69,15 @@ class TimePickerField extends StatelessWidget {
     final selected = await showTimePicker(
       context: context,
       initialTime: initial,
+      builder: (dialogContext, child) {
+        final base = MediaQuery.of(context);
+        return MediaQuery(
+          data: base.copyWith(
+            alwaysUse24HourFormat: base.alwaysUse24HourFormat,
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
     if (selected != null) {
       onChanged(_formatTime(selected));

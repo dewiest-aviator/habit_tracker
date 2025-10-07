@@ -1,18 +1,24 @@
+import 'dart:io';
+
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+enum NotificationAuthorizationStatus { unknown, notDetermined, granted, denied }
 
 class NotificationService {
   NotificationService({
     FlutterLocalNotificationsPlugin? plugin,
     Future<String> Function()? timeZoneNameProvider,
-  })  : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
-        _timeZoneNameProvider =
-            timeZoneNameProvider ?? _defaultTimeZoneNameProvider;
+  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+       _timeZoneNameProvider =
+           timeZoneNameProvider ?? _defaultTimeZoneNameProvider;
 
   final FlutterLocalNotificationsPlugin _plugin;
   final Future<String> Function() _timeZoneNameProvider;
@@ -62,6 +68,56 @@ class NotificationService {
     }
 
     return granted;
+  }
+
+  Future<NotificationAuthorizationStatus> getPermissionStatus() async {
+    if (Platform.isIOS || Platform.isMacOS) {
+      final iosPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      final macPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
+      final options =
+          await iosPlugin?.checkPermissions() ??
+          await macPlugin?.checkPermissions();
+      if (options == null) {
+        return NotificationAuthorizationStatus.unknown;
+      }
+      if (options.isEnabled || options.isProvisionalEnabled) {
+        return NotificationAuthorizationStatus.granted;
+      }
+      return NotificationAuthorizationStatus.denied;
+    }
+
+    final status = await Permission.notification.status;
+    if (status.isGranted || status.isProvisional) {
+      return NotificationAuthorizationStatus.granted;
+    }
+    if (status.isPermanentlyDenied || status.isRestricted || status.isLimited) {
+      return NotificationAuthorizationStatus.denied;
+    }
+    if (status.isDenied) {
+      return NotificationAuthorizationStatus.notDetermined;
+    }
+    return NotificationAuthorizationStatus.unknown;
+  }
+
+  Future<NotificationAuthorizationStatus>
+  requestAndGetPermissionStatus() async {
+    await requestPermission();
+    return getPermissionStatus();
+  }
+
+  Future<bool> openSystemNotificationSettings() async {
+    try {
+      await AppSettings.openAppSettings(type: AppSettingsType.notification);
+      return true;
+    } on PlatformException {
+      return false;
+    }
   }
 
   Future<void> scheduleHabitReminder({

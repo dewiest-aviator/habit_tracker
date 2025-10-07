@@ -620,6 +620,60 @@ abstract class AppLocalizations {
   /// **'Receive a helpful nudge to complete today’s habits.'**
   String get settingsNotificationsSubtitle;
 
+  /// No description provided for @settingsNotificationPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission'**
+  String get settingsNotificationPermissionTitle;
+
+  /// No description provided for @settingsNotificationPermissionStatusGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Granted'**
+  String get settingsNotificationPermissionStatusGranted;
+
+  /// No description provided for @settingsNotificationPermissionStatusDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Denied'**
+  String get settingsNotificationPermissionStatusDenied;
+
+  /// No description provided for @settingsNotificationPermissionStatusAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Requires permission'**
+  String get settingsNotificationPermissionStatusAsk;
+
+  /// No description provided for @settingsNotificationPermissionStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Status unavailable'**
+  String get settingsNotificationPermissionStatusUnknown;
+
+  /// No description provided for @settingsNotificationPermissionActionRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Request'**
+  String get settingsNotificationPermissionActionRequest;
+
+  /// No description provided for @settingsNotificationPermissionActionSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get settingsNotificationPermissionActionSettings;
+
+  /// No description provided for @settingsNotificationPermissionGrantedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are enabled.'**
+  String get settingsNotificationPermissionGrantedMessage;
+
+  /// No description provided for @settingsNotificationPermissionDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications remain disabled. Update system settings to allow alerts.'**
+  String get settingsNotificationPermissionDeniedMessage;
+
   /// No description provided for @settingsNotificationTimeTitle.
   ///
   /// In en, this message translates to:
@@ -679,6 +733,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Always use a dark theme'**
   String get settingsThemeDescriptionDark;
+
+  /// No description provided for @settingsTimeFormatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time format'**
+  String get settingsTimeFormatLabel;
+
+  /// No description provided for @settingsTimeFormatOptionSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Match device'**
+  String get settingsTimeFormatOptionSystem;
+
+  /// No description provided for @settingsTimeFormatOption12h.
+  ///
+  /// In en, this message translates to:
+  /// **'12-hour'**
+  String get settingsTimeFormatOption12h;
+
+  /// No description provided for @settingsTimeFormatOption24h.
+  ///
+  /// In en, this message translates to:
+  /// **'24-hour'**
+  String get settingsTimeFormatOption24h;
+
+  /// No description provided for @settingsTimeFormatDescriptionSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the time format from your device settings.'**
+  String get settingsTimeFormatDescriptionSystem;
+
+  /// No description provided for @settingsTimeFormatDescription12h.
+  ///
+  /// In en, this message translates to:
+  /// **'Display times with AM/PM markers.'**
+  String get settingsTimeFormatDescription12h;
+
+  /// No description provided for @settingsTimeFormatDescription24h.
+  ///
+  /// In en, this message translates to:
+  /// **'Display times using 00:00–23:59.'**
+  String get settingsTimeFormatDescription24h;
 
   /// No description provided for @settingsLanguageSection.
   ///
@@ -740,6 +836,60 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get htmlThemeOptionDark;
 
+  /// No description provided for @settingsSupportSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get settingsSupportSection;
+
+  /// No description provided for @settingsRateApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Habit Tracker'**
+  String get settingsRateApp;
+
+  /// No description provided for @settingsRateAppSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share feedback and help others discover the app'**
+  String get settingsRateAppSubtitle;
+
+  /// No description provided for @settingsRateAppSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks for rating Habit Tracker!'**
+  String get settingsRateAppSuccess;
+
+  /// No description provided for @settingsRateAppFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t open the review flow right now.'**
+  String get settingsRateAppFailure;
+
+  /// No description provided for @settingsReportIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Report an issue'**
+  String get settingsReportIssue;
+
+  /// No description provided for @settingsReportIssueSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a support email with diagnostics attached'**
+  String get settingsReportIssueSubtitle;
+
+  /// No description provided for @settingsReportIssueSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafting an email with support details.'**
+  String get settingsReportIssueSuccess;
+
+  /// No description provided for @settingsReportIssueFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t open your email app. Please try again later.'**
+  String get settingsReportIssueFailure;
+
   /// No description provided for @settingsAboutSection.
   ///
   /// In en, this message translates to:
@@ -769,6 +919,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'How we handle your data'**
   String get settingsPrivacyPolicySubtitle;
+
+  /// No description provided for @settingsLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licenses'**
+  String get settingsLicenses;
+
+  /// No description provided for @settingsLicensesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View licenses for included packages'**
+  String get settingsLicensesSubtitle;
 
   /// Displays the version and build number on settings.
   ///

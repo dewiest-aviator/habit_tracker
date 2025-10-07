@@ -21,6 +21,8 @@ import 'features/onboarding/application/onboarding_controller.dart';
 import 'features/settings/application/providers/theme_provider.dart';
 import 'features/settings/application/providers/language_provider.dart';
 import 'features/settings/application/providers/notification_settings_provider.dart';
+import 'features/settings/application/providers/time_preferences_provider.dart';
+import 'features/settings/application/controllers/time_preferences_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/analytics_service.dart';
 import 'l10n/app_localizations.dart';
@@ -68,6 +70,7 @@ Future<void> main() async {
   await container.read(themeControllerProvider.notifier).load();
   await container.read(languageControllerProvider.notifier).load();
   await container.read(notificationSettingsProvider.notifier).load();
+  await container.read(timePreferencesProvider.notifier).load();
 
   if (enableFirebase) {
     // Forward Flutter framework errors
@@ -134,6 +137,7 @@ class HabitTrackerApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeControllerProvider).themeMode;
     final locale = ref.watch(languageControllerProvider).locale;
+    final timePreferences = ref.watch(timePreferencesProvider);
 
     final baseTitle =
         Localizations.of<AppLocalizations>(
@@ -158,7 +162,35 @@ class HabitTrackerApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
-      builder: (context, child) => child ?? const SizedBox.shrink(),
+      builder: (context, child) {
+        final body = child ?? const SizedBox.shrink();
+        final existing = MediaQuery.maybeOf(context);
+        final mediaQuery = existing ?? MediaQueryData.fromView(
+          WidgetsBinding.instance.platformDispatcher.views.first,
+        );
+        final use24HourFormat = _resolveUse24HourFormat(
+          mediaQuery,
+          timePreferences,
+        );
+        return MediaQuery(
+          data: mediaQuery.copyWith(alwaysUse24HourFormat: use24HourFormat),
+          child: body,
+        );
+      },
     );
+  }
+
+  bool _resolveUse24HourFormat(
+    MediaQueryData mediaQuery,
+    TimePreferencesState state,
+  ) {
+    switch (state.preference) {
+      case TimeFormatPreference.system:
+        return mediaQuery.alwaysUse24HourFormat;
+      case TimeFormatPreference.h12:
+        return false;
+      case TimeFormatPreference.h24:
+        return true;
+    }
   }
 }
