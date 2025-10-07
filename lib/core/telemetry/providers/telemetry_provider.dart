@@ -7,8 +7,7 @@ import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.da
 /// The controller is initialized in `main.dart` and injected via
 /// [ProviderScope.overrides] so that widget tests can supply their own
 /// instances easily.
-final telemetryControllerProvider = ChangeNotifierProvider<TelemetryController>(
-  (ref) => throw UnimplementedError(
-    'Override telemetryControllerProvider before reading it.',
-  ),
-);
+final telemetryControllerProvider =
+    NotifierProvider<TelemetryController, TelemetryState>(
+      TelemetryController.new,
+    );

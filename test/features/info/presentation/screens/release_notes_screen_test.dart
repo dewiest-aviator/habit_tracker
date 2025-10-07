@@ -40,8 +40,7 @@ void main() {
       ),
     );
 
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     final htmlFinder = find.byType(Html);
     expect(htmlFinder, findsOneWidget);
@@ -86,8 +85,7 @@ void main() {
       ),
     );
 
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Failed to load release notes'), findsOneWidget);
   });

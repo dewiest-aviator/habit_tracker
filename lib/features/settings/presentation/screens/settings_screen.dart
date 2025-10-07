@@ -16,21 +16,27 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final telemetry = ref.watch(telemetryControllerProvider);
-    final analyticsEnabled = telemetry.isAnalyticsEnabled;
-    final crashEnabled = telemetry.isCrashEnabled;
-    final loaded = telemetry.isLoaded;
-    final themeController = ref.watch(themeControllerProvider);
-    final themeMode = themeController.themeMode;
+    final telemetryState = ref.watch(telemetryControllerProvider);
+    final telemetryController =
+        ref.read(telemetryControllerProvider.notifier);
+    final analyticsEnabled = telemetryState.analyticsConsent;
+    final crashEnabled = telemetryState.crashConsent;
+    final loaded = telemetryState.isLoaded;
+    final themeState = ref.watch(themeControllerProvider);
+    final themeController = ref.read(themeControllerProvider.notifier);
+    final themeMode = themeState.themeMode;
     const themeModes = [ThemeMode.system, ThemeMode.light, ThemeMode.dark];
-    final languageController = ref.watch(languageControllerProvider);
-    final currentLocale = languageController.locale;
+    final languageState = ref.watch(languageControllerProvider);
+    final languageController = ref.read(languageControllerProvider.notifier);
+    final currentLocale = languageState.locale;
     final supportedLocales = AppLocalizations.supportedLocales;
     final appInfo = ref.watch(appInfoProvider);
-    final notificationSettings = ref.watch(notificationSettingsProvider);
-    final notificationsLoaded = notificationSettings.hasLoaded;
-    final notificationsEnabled = notificationSettings.enabled;
-    final reminderTime = notificationSettings.reminderTime;
+    final notificationSettingsState = ref.watch(notificationSettingsProvider);
+    final notificationSettingsController =
+        ref.read(notificationSettingsProvider.notifier);
+    final notificationsLoaded = notificationSettingsState.hasLoaded;
+    final notificationsEnabled = notificationSettingsState.enabled;
+    final reminderTime = notificationSettingsState.reminderTime;
     final formattedReminderTime = MaterialLocalizations.of(
       context,
     ).formatTimeOfDay(reminderTime);
@@ -141,7 +147,8 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: Text(context.l10n.settingsNotificationsSubtitle),
                   value: notificationsEnabled,
                   onChanged: notificationsLoaded
-                      ? (value) => notificationSettings.setEnabled(value)
+                      ? (value) =>
+                          notificationSettingsController.setEnabled(value)
                       : null,
                 ),
                 const Divider(height: 0),
@@ -164,7 +171,8 @@ class SettingsScreen extends ConsumerWidget {
                             initialTime: reminderTime,
                           );
                           if (picked != null) {
-                            await notificationSettings.setReminderTime(picked);
+                            await notificationSettingsController
+                                .setReminderTime(picked);
                           }
                         },
                 ),
@@ -184,7 +192,8 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: Text(context.l10n.settingsAnalyticsSubtitle),
                   value: analyticsEnabled,
                   onChanged: loaded
-                      ? (value) => telemetry.updateAnalyticsConsent(value)
+                      ? (value) =>
+                          telemetryController.updateAnalyticsConsent(value)
                       : null,
                 ),
                 const Divider(height: 0),
@@ -194,7 +203,8 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: Text(context.l10n.settingsCrashSubtitle),
                   value: crashEnabled,
                   onChanged: loaded
-                      ? (value) => telemetry.updateCrashConsent(value)
+                      ? (value) =>
+                          telemetryController.updateCrashConsent(value)
                       : null,
                 ),
               ],

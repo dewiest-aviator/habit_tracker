@@ -3,6 +3,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:habit_tracker/core/router/app_router.dart';
 import 'package:habit_tracker/core/services/analytics_service.dart';
 import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
@@ -13,17 +14,11 @@ import 'package:habit_tracker/features/habits/data/repositories/habits_repositor
 import 'package:habit_tracker/features/habits/domain/domain.dart';
 import 'package:habit_tracker/features/habits/domain/usecases/toggle_habit_completion.dart';
 import 'package:habit_tracker/features/info/application/providers/app_info_provider.dart';
-import 'package:habit_tracker/features/settings/application/controllers/notification_settings_controller.dart';
-import 'package:habit_tracker/features/settings/application/controllers/theme_controller.dart';
-import 'package:habit_tracker/features/settings/application/providers/notification_settings_provider.dart';
-import 'package:habit_tracker/features/settings/application/providers/theme_provider.dart';
-import 'package:habit_tracker/features/settings/application/controllers/language_controller.dart';
-import 'package:habit_tracker/features/settings/application/providers/language_provider.dart';
 import 'package:habit_tracker/l10n/app_localizations.dart';
 import 'package:habit_tracker/l10n/app_localizations_en.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _MockAnalytics extends Mock implements FirebaseAnalytics {}
 
@@ -38,17 +33,13 @@ class _MockToggleHabitCompletion extends Mock
     implements ToggleHabitCompletion {}
 
 void main() {
-  late TelemetryController controller;
   late _MockAnalytics analytics;
   late _MockCrashlytics crashlytics;
-  late ThemeController themeController;
-  late NotificationSettingsController notificationController;
-  late LanguageController languageController;
-  late PackageInfo packageInfo;
   late _MockHabitsRepository habitsRepository;
   late _MockHabitEntriesRepository habitEntriesRepository;
   late _MockToggleHabitCompletion toggleHabitCompletion;
   late Habit sampleHabit;
+  late PackageInfo packageInfo;
 
   setUpAll(() {
     registerFallbackValue(DateTime(2024));
@@ -65,10 +56,8 @@ void main() {
 
     analytics = _MockAnalytics();
     crashlytics = _MockCrashlytics();
-
-    when(
-      () => analytics.setAnalyticsCollectionEnabled(any()),
-    ).thenAnswer((_) async {});
+    when(() => analytics.setAnalyticsCollectionEnabled(any()))
+        .thenAnswer((_) async {});
     when(() => analytics.logAppOpen()).thenAnswer((_) async {});
     when(
       () => analytics.logEvent(
@@ -76,40 +65,8 @@ void main() {
         parameters: any(named: 'parameters'),
       ),
     ).thenAnswer((_) async {});
-    when(
-      () => analytics.logScreenView(
-        screenName: any(named: 'screenName'),
-        screenClass: any(named: 'screenClass'),
-      ),
-    ).thenAnswer((_) async {});
-    when(
-      () => crashlytics.setCrashlyticsCollectionEnabled(any()),
-    ).thenAnswer((_) async {});
-
-    controller = TelemetryController(
-      enableFirebase: true,
-      analytics: analytics,
-      crashlytics: crashlytics,
-    );
-    await controller.initialize();
-
-    themeController = ThemeController();
-    await themeController.load();
-
-    notificationController = NotificationSettingsController();
-    await notificationController.load();
-
-    languageController = LanguageController();
-    await languageController.load();
-
-    packageInfo = PackageInfo(
-      appName: 'Habit Tracker',
-      packageName: 'com.example.habit',
-      version: '1.2.3',
-      buildNumber: '42',
-      buildSignature: 'sig',
-      installerStore: null,
-    );
+    when(() => crashlytics.setCrashlyticsCollectionEnabled(any()))
+        .thenAnswer((_) async {});
 
     habitsRepository = _MockHabitsRepository();
     habitEntriesRepository = _MockHabitEntriesRepository();
@@ -127,58 +84,54 @@ void main() {
       currentStreak: 1,
     );
 
-    when(
-      () => habitsRepository.getTodayHabits(any()),
-    ).thenAnswer((_) async => [sampleHabit]);
-    when(
-      () => habitsRepository.watchTodayHabits(any()),
-    ).thenAnswer((_) => Stream.value([sampleHabit]));
-    when(
-      () => habitEntriesRepository.fetchEntriesForDate(any()),
-    ).thenAnswer((_) async => <HabitEntry>[]);
-    when(
-      () => habitEntriesRepository.watchEntriesForDate(any()),
-    ).thenAnswer((_) => Stream.value(<HabitEntry>[]));
-    when(
-      () => toggleHabitCompletion.call(
-        habitId: any(named: 'habitId'),
-        date: any(named: 'date'),
-      ),
-    ).thenAnswer((invocation) async {
+    when(() => habitsRepository.getTodayHabits(any()))
+        .thenAnswer((_) async => [sampleHabit]);
+    when(() => habitsRepository.watchTodayHabits(any()))
+        .thenAnswer((_) => Stream.value([sampleHabit]));
+    when(() => habitEntriesRepository.fetchEntriesForDate(any()))
+        .thenAnswer((_) async => <HabitEntry>[]);
+    when(() => habitEntriesRepository.watchEntriesForDate(any()))
+        .thenAnswer((_) => Stream.value(<HabitEntry>[]));
+    when(() => toggleHabitCompletion.call(
+          habitId: any(named: 'habitId'),
+          date: any(named: 'date'),
+        )).thenAnswer((invocation) async {
       final date = invocation.namedArguments[#date] as DateTime;
       return ToggleHabitResult(
         habit: sampleHabit,
         entry: HabitEntry(habitId: sampleHabit.id, date: date, done: true),
       );
     });
+
+    packageInfo = PackageInfo(
+      appName: 'Habit Tracker',
+      packageName: 'com.example.habit',
+      version: '1.2.3',
+      buildNumber: '42',
+      buildSignature: 'sig',
+      installerStore: null,
+    );
   });
 
-  testWidgets('navigates from Home to Settings', (WidgetTester tester) async {
-    final router = createAppRouter(
-      observers: [
-        if (controller.analyticsObserver != null) controller.analyticsObserver!,
-      ],
-    );
-    final l10n = AppLocalizationsEn();
+  Future<void> pumpRouterApp(WidgetTester tester, GoRouter router) async {
+    final overrides = [
+      telemetryConfigProvider.overrideWithValue(
+        TelemetryConfig(
+          enableFirebase: true,
+          analytics: analytics,
+          crashlytics: crashlytics,
+        ),
+      ),
+      telemetryControllerProvider.overrideWith(TelemetryController.new),
+      appInfoProvider.overrideWith((ref) async => packageInfo),
+      habitsRepositoryProvider.overrideWithValue(habitsRepository),
+      habitEntriesRepositoryProvider.overrideWithValue(habitEntriesRepository),
+      toggleHabitCompletionProvider.overrideWithValue(toggleHabitCompletion),
+    ];
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          telemetryControllerProvider.overrideWith((ref) => controller),
-          themeControllerProvider.overrideWith((ref) => themeController),
-          languageControllerProvider.overrideWith((ref) => languageController),
-          notificationSettingsProvider.overrideWith(
-            (ref) => notificationController,
-          ),
-          appInfoProvider.overrideWith((ref) async => packageInfo),
-          habitsRepositoryProvider.overrideWithValue(habitsRepository),
-          habitEntriesRepositoryProvider.overrideWithValue(
-            habitEntriesRepository,
-          ),
-          toggleHabitCompletionProvider.overrideWithValue(
-            toggleHabitCompletion,
-          ),
-        ],
+        overrides: overrides,
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
@@ -189,23 +142,29 @@ void main() {
         ),
       ),
     );
-
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('navigates from Home to Settings', (WidgetTester tester) async {
+    final router = createAppRouter();
+    addTearDown(router.dispose);
+
+    final l10n = AppLocalizationsEn();
+    await pumpRouterApp(tester, router);
+
     expect(find.text(l10n.homeTodayTitle), findsOneWidget);
 
     final settingsNav = find.descendant(
       of: find.byType(NavigationBar),
       matching: find.text(l10n.navSettingsLabel),
     );
-    expect(settingsNav, findsOneWidget);
     await tester.tap(settingsNav);
     await tester.pumpAndSettle();
-
-    final settingsTitleFinder = find.descendant(
+    final settingsTitle = find.descendant(
       of: find.byType(AppBar),
       matching: find.text(l10n.settingsTitle),
     );
-    expect(settingsTitleFinder, findsOneWidget);
+    expect(settingsTitle, findsOneWidget);
 
     final homeNav = find.descendant(
       of: find.byType(NavigationBar),
@@ -218,7 +177,6 @@ void main() {
     expect(fab, findsOneWidget);
     await tester.tap(fab);
     await tester.pumpAndSettle();
-
     expect(find.byTooltip('Back'), findsOneWidget);
 
     router.pop();
@@ -229,37 +187,10 @@ void main() {
   testWidgets('shows not found page for unknown routes', (
     WidgetTester tester,
   ) async {
-    final router = createAppRouter(
-      observers: [
-        if (controller.analyticsObserver != null) controller.analyticsObserver!,
-      ],
-    );
+    final router = createAppRouter();
+    addTearDown(router.dispose);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          telemetryControllerProvider.overrideWith((ref) => controller),
-          themeControllerProvider.overrideWith((ref) => themeController),
-          languageControllerProvider.overrideWith((ref) => languageController),
-          appInfoProvider.overrideWith((ref) async => packageInfo),
-          habitsRepositoryProvider.overrideWithValue(habitsRepository),
-          habitEntriesRepositoryProvider.overrideWithValue(
-            habitEntriesRepository,
-          ),
-          toggleHabitCompletionProvider.overrideWithValue(
-            toggleHabitCompletion,
-          ),
-        ],
-        child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
-        ),
-      ),
-    );
+    await pumpRouterApp(tester, router);
 
     router.go('/missing');
     await tester.pumpAndSettle();

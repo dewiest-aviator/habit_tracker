@@ -21,7 +21,6 @@ class _MockMacFlutterLocalNotificationsPlugin extends Mock
 void main() {
   late _MockFlutterLocalNotificationsPlugin plugin;
   late NotificationService service;
-
   setUp(() {
     plugin = _MockFlutterLocalNotificationsPlugin();
     service = NotificationService(plugin: plugin);
@@ -33,9 +32,8 @@ void main() {
       tz.TZDateTime(tz.UTC, 2024, 1, 1),
     );
     registerFallbackValue(const NotificationDetails());
-    registerFallbackValue(
-      UILocalNotificationDateInterpretation.wallClockTime,
-    );
+    registerFallbackValue(AndroidScheduleMode.inexactAllowWhileIdle);
+    registerFallbackValue(DateTimeComponents.dayOfWeekAndTime);
   });
 
   tearDown(() {
@@ -117,8 +115,6 @@ void main() {
           any(),
           any(),
           androidScheduleMode: any(named: 'androidScheduleMode'),
-          uiLocalNotificationDateInterpretation:
-              any(named: 'uiLocalNotificationDateInterpretation'),
           matchDateTimeComponents: any(named: 'matchDateTimeComponents'),
         ),
       ).thenAnswer((_) async {});
@@ -158,6 +154,28 @@ void main() {
       );
 
       expect(tz.local.name, 'UTC');
+    });
+
+    test('schedules notifications for each requested day', () async {
+      await service.scheduleHabitReminder(
+        habitId: 'habit',
+        title: 'title',
+        body: 'body',
+        days: const [0, 2],
+        time: '09:00',
+      );
+
+      verify(
+        () => plugin.zonedSchedule(
+          any(),
+          'title',
+          'body',
+          any(),
+          any(),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        ),
+      ).called(2);
     });
   });
 }

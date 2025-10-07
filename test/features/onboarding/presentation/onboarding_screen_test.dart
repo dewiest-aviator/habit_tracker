@@ -16,8 +16,8 @@ import 'package:habit_tracker/features/settings/application/providers/notificati
 import 'package:habit_tracker/l10n/app_localizations.dart';
 import 'package:habit_tracker/l10n/app_localizations_en.dart';
 import 'package:habit_tracker/core/services/notification_service.dart';
-import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
+import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
 
 class _MockHabitsRepository extends Mock implements HabitsRepository {}
 
@@ -52,20 +52,9 @@ Future<void> _pumpOnboarding(
       overrides: [
         habitsRepositoryProvider.overrideWithValue(habitsRepository),
         notificationServiceProvider.overrideWithValue(notificationService),
-        notificationSettingsProvider.overrideWith((ref) {
-          return notificationSettings;
-        }),
-        telemetryControllerProvider.overrideWith((ref) => telemetryController),
-        onboardingControllerProvider.overrideWith((ref) {
-          final controller = OnboardingController(
-            habitsRepository: habitsRepository,
-            notificationService: notificationService,
-            notificationSettings: notificationSettings,
-            telemetryController: telemetryController,
-            preferences: prefs,
-          );
-          return controller;
-        }),
+        notificationSettingsProvider.overrideWith(() => notificationSettings),
+        telemetryControllerProvider.overrideWith(() => telemetryController),
+        onboardingPreferencesProvider.overrideWithValue(prefs),
       ],
       child: MaterialApp.router(
         routerConfig: router,
@@ -110,8 +99,6 @@ void main() {
     notificationService = _MockNotificationService();
     notificationSettings = _TestNotificationSettingsController(prefs: prefs);
     telemetryController = TelemetryController(enableFirebase: false);
-    await telemetryController.initialize();
-    addTearDown(telemetryController.dispose);
 
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
   });

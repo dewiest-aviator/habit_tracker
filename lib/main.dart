@@ -18,13 +18,11 @@ import 'core/telemetry/providers/telemetry_provider.dart';
 import 'core/database/habit_database.dart';
 import 'core/services/notification_service.dart';
 import 'features/onboarding/application/onboarding_controller.dart';
-import 'features/settings/application/controllers/theme_controller.dart';
-import 'features/settings/application/controllers/language_controller.dart';
 import 'features/settings/application/providers/theme_provider.dart';
-import 'features/settings/application/controllers/notification_settings_controller.dart';
 import 'features/settings/application/providers/language_provider.dart';
 import 'features/settings/application/providers/notification_settings_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/analytics_service.dart';
 import 'l10n/app_localizations.dart';
 
 // Gate Firebase/Crashlytics behind a compile-time flag.
@@ -52,24 +50,24 @@ Future<void> main() async {
     }
   }
 
-  final telemetryController = TelemetryController(
-    enableFirebase: enableFirebase,
-  );
-  await telemetryController.initialize();
-
-  final themeController = ThemeController();
-  await themeController.load();
-
-  final languageController = LanguageController();
-  await languageController.load();
-
-  final notificationSettingsController = NotificationSettingsController();
-  await notificationSettingsController.load();
-
   final prefs = await SharedPreferences.getInstance();
   final hasOnboarded =
       prefs.getBool(OnboardingController.hasOnboardedKey) ?? false;
   final notificationService = NotificationService();
+  final container = ProviderContainer(
+    overrides: [
+      telemetryConfigProvider.overrideWithValue(
+        TelemetryConfig(enableFirebase: enableFirebase),
+      ),
+      habitDatabaseProvider.overrideWithValue(database),
+      notificationServiceProvider.overrideWithValue(notificationService),
+    ],
+  );
+
+  await container.read(telemetryControllerProvider.notifier).initialize();
+  await container.read(themeControllerProvider.notifier).load();
+  await container.read(languageControllerProvider.notifier).load();
+  await container.read(notificationSettingsProvider.notifier).load();
 
   if (enableFirebase) {
     // Forward Flutter framework errors
@@ -100,7 +98,7 @@ Future<void> main() async {
   }
 
   final observers = <NavigatorObserver>[];
-  final observer = telemetryController.analyticsObserver;
+  final observer = AnalyticsService.observer;
   if (observer != null) {
     observers.add(observer);
   }
@@ -112,17 +110,8 @@ Future<void> main() async {
   );
 
   runApp(
-    ProviderScope(
-      overrides: [
-        telemetryControllerProvider.overrideWith((ref) => telemetryController),
-        themeControllerProvider.overrideWith((ref) => themeController),
-        languageControllerProvider.overrideWith((ref) => languageController),
-        notificationSettingsProvider.overrideWith(
-          (ref) => notificationSettingsController,
-        ),
-        habitDatabaseProvider.overrideWithValue(database),
-        notificationServiceProvider.overrideWithValue(notificationService),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: HabitTrackerApp(
         router: router,
         rootNavigatorKey: rootNavigatorKey,

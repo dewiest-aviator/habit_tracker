@@ -116,7 +116,7 @@ void main() {
   Future<void> pumpHome(WidgetTester tester, HomeController controller) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [homeControllerProvider.overrideWith((ref) => controller)],
+        overrides: [homeControllerProvider.overrideWith(() => controller)],
         child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

@@ -1,8 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_tracker/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LanguageController extends ChangeNotifier {
+class LanguageState {
+  const LanguageState({this.locale, this.hasLoaded = false});
+
+  final Locale? locale;
+  final bool hasLoaded;
+
+  LanguageState copyWith({Locale? locale, bool? hasLoaded}) {
+    return LanguageState(
+      locale: locale ?? this.locale,
+      hasLoaded: hasLoaded ?? this.hasLoaded,
+    );
+  }
+}
+
+class LanguageController extends Notifier<LanguageState> {
   LanguageController({SharedPreferences? preferences})
     : _providedPrefs = preferences;
 
@@ -11,26 +28,31 @@ class LanguageController extends ChangeNotifier {
   final SharedPreferences? _providedPrefs;
   SharedPreferences? _prefs;
 
-  Locale? _locale;
-  bool _hasLoaded = false;
+  Locale? get locale => state.locale;
+  bool get hasLoaded => state.hasLoaded;
 
-  Locale? get locale => _locale;
-  bool get hasLoaded => _hasLoaded;
+  @override
+  LanguageState build() {
+    Future<void>.microtask(() async {
+      if (!ref.mounted) return;
+      await load();
+    });
+    return const LanguageState();
+  }
 
   Future<void> load() async {
+    if (state.hasLoaded && _prefs != null) return;
+
     final prefs = _providedPrefs ?? await SharedPreferences.getInstance();
     _prefs = prefs;
-    _locale = _stringToLocale(prefs.getString(_prefsKey));
-    _hasLoaded = true;
-    notifyListeners();
+    final resolved = _stringToLocale(prefs.getString(_prefsKey));
+    state = state.copyWith(locale: resolved, hasLoaded: true);
   }
 
   Future<void> setLocale(Locale? locale) async {
-    if (_hasLoaded && _locale == locale) return;
+    if (state.hasLoaded && state.locale == locale) return;
 
-    _locale = locale;
-    _hasLoaded = true;
-    notifyListeners();
+    state = state.copyWith(locale: locale, hasLoaded: true);
 
     final prefs =
         _prefs ?? _providedPrefs ?? await SharedPreferences.getInstance();

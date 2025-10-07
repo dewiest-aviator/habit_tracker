@@ -9,31 +9,30 @@ import '../domain/domain.dart';
 import '../domain/usecases/toggle_habit_completion.dart';
 import 'home_state.dart';
 
-class HomeController extends StateNotifier<HomeState> {
+class HomeController extends Notifier<HomeState> {
   HomeController({
-    required HabitsRepository habitsRepository,
-    required HabitEntriesRepository habitEntriesRepository,
-    required ToggleHabitCompletion toggleHabitCompletion,
+    HabitsRepository? habitsRepository,
+    HabitEntriesRepository? habitEntriesRepository,
+    ToggleHabitCompletion? toggleHabitCompletion,
     DateTime Function()? clock,
     Timer Function(Duration, void Function())? timerFactory,
-  }) : _habitsRepository = habitsRepository,
-       _habitEntriesRepository = habitEntriesRepository,
-       _toggleHabitCompletion = toggleHabitCompletion,
-       _clock = clock ?? DateTime.now,
-       _timerFactory =
-           timerFactory ?? ((duration, callback) => Timer(duration, callback)),
-       _currentDay = DateHelpers.startOfDay((clock ?? DateTime.now)()),
-       super(
-         HomeState.initial(DateHelpers.startOfDay((clock ?? DateTime.now)())),
-       ) {
-    _init();
-  }
+  })  : _habitsRepositoryOverride = habitsRepository,
+        _habitEntriesRepositoryOverride = habitEntriesRepository,
+        _toggleHabitCompletionOverride = toggleHabitCompletion,
+        _clockOverride = clock,
+        _timerFactoryOverride = timerFactory;
 
-  final HabitsRepository _habitsRepository;
-  final HabitEntriesRepository _habitEntriesRepository;
-  final ToggleHabitCompletion _toggleHabitCompletion;
-  final DateTime Function() _clock;
-  final Timer Function(Duration, void Function()) _timerFactory;
+  final HabitsRepository? _habitsRepositoryOverride;
+  final HabitEntriesRepository? _habitEntriesRepositoryOverride;
+  final ToggleHabitCompletion? _toggleHabitCompletionOverride;
+  final DateTime Function()? _clockOverride;
+  final Timer Function(Duration, void Function())? _timerFactoryOverride;
+
+  late HabitsRepository _habitsRepository;
+  late HabitEntriesRepository _habitEntriesRepository;
+  late ToggleHabitCompletion _toggleHabitCompletion;
+  late DateTime Function() _clock;
+  late Timer Function(Duration, void Function()) _timerFactory;
 
   late DateTime _currentDay;
   Timer? _midnightTimer;
@@ -41,6 +40,34 @@ class HomeController extends StateNotifier<HomeState> {
   StreamSubscription<List<HabitEntry>>? _entriesSubscription;
   List<Habit> _latestHabits = const <Habit>[];
   List<HabitEntry> _latestEntries = const <HabitEntry>[];
+
+  @override
+  HomeState build() {
+    _habitsRepository =
+        _habitsRepositoryOverride ?? ref.read(habitsRepositoryProvider);
+    _habitEntriesRepository = _habitEntriesRepositoryOverride ??
+        ref.read(habitEntriesRepositoryProvider);
+    _toggleHabitCompletion =
+        _toggleHabitCompletionOverride ?? ref.read(toggleHabitCompletionProvider);
+    _clock = _clockOverride ?? ref.read(homeControllerClockProvider);
+    _timerFactory = _timerFactoryOverride ?? ref.read(homeControllerTimerProvider);
+
+    _currentDay = DateHelpers.startOfDay(_clock());
+    _latestHabits = const <Habit>[];
+    _latestEntries = const <HabitEntry>[];
+
+    Future<void>.microtask(() {
+      if (!ref.mounted) return;
+      _init();
+    });
+
+    ref.onDispose(() {
+      _midnightTimer?.cancel();
+      unawaited(_cancelSubscriptions());
+    });
+
+    return HomeState.initial(_currentDay);
+  }
 
   void _init() {
     _scheduleMidnightRefresh();
@@ -183,23 +210,16 @@ class HomeController extends StateNotifier<HomeState> {
     _scheduleMidnightRefresh();
   }
 
-  @override
-  void dispose() {
-    _midnightTimer?.cancel();
-    unawaited(_cancelSubscriptions());
-    super.dispose();
-  }
 }
 
-final homeControllerProvider =
-    StateNotifierProvider.autoDispose<HomeController, HomeState>((ref) {
-      final habitsRepository = ref.watch(habitsRepositoryProvider);
-      final habitEntriesRepository = ref.watch(habitEntriesRepositoryProvider);
-      final toggleHabitCompletion = ref.watch(toggleHabitCompletionProvider);
+final homeControllerClockProvider = Provider<DateTime Function()>((ref) {
+  return DateTime.now;
+});
 
-      return HomeController(
-        habitsRepository: habitsRepository,
-        habitEntriesRepository: habitEntriesRepository,
-        toggleHabitCompletion: toggleHabitCompletion,
-      );
+final homeControllerTimerProvider =
+    Provider<Timer Function(Duration, void Function())>((ref) {
+      return (duration, callback) => Timer(duration, callback);
     });
+
+final homeControllerProvider =
+    NotifierProvider.autoDispose<HomeController, HomeState>(HomeController.new);
