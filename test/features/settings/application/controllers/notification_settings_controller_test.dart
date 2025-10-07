@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_tracker/core/services/notification_service.dart';
 import 'package:habit_tracker/features/settings/application/controllers/notification_settings_controller.dart';
 import 'package:habit_tracker/features/settings/application/providers/notification_settings_provider.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _MockNotificationService extends Mock implements NotificationService {}
 
 void main() {
   late ProviderContainer container;
+  late NotificationService notificationService;
 
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
@@ -21,9 +26,27 @@ void main() {
     fail('NotificationSettingsController did not load in time');
   }
 
+  ProviderContainer makeContainer() {
+    return ProviderContainer(
+      overrides: [
+        notificationServiceProvider.overrideWithValue(notificationService),
+      ],
+    );
+  }
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    container = ProviderContainer();
+    notificationService = _MockNotificationService();
+    when(
+      () => notificationService.getPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.granted);
+    when(
+      () => notificationService.requestAndGetPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.granted);
+    when(
+      () => notificationService.openSystemNotificationSettings(),
+    ).thenAnswer((_) async => true);
+    container = makeContainer();
   });
 
   tearDown(() {
@@ -49,7 +72,7 @@ void main() {
     await controller.setEnabled(true);
     expect(container.read(notificationSettingsProvider).enabled, isTrue);
 
-    final secondContainer = ProviderContainer();
+    final secondContainer = makeContainer();
     secondContainer.read(notificationSettingsProvider.notifier);
     await Future<void>.delayed(Duration.zero);
     for (var i = 0; i < 10; i += 1) {
@@ -74,7 +97,7 @@ void main() {
     await controller.setReminderTime(time);
     expect(container.read(notificationSettingsProvider).reminderTime, time);
 
-    final secondContainer = ProviderContainer();
+    final secondContainer = makeContainer();
     secondContainer.read(notificationSettingsProvider.notifier);
     await Future<void>.delayed(Duration.zero);
     for (var i = 0; i < 10; i += 1) {

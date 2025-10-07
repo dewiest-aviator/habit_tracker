@@ -89,6 +89,15 @@ void main() {
     when(
       () => notificationService.requestPermission(),
     ).thenAnswer((_) async => true);
+    when(
+      () => notificationService.getPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.notDetermined);
+    when(
+      () => notificationService.requestAndGetPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.granted);
+    when(
+      () => notificationService.openSystemNotificationSettings(),
+    ).thenAnswer((_) async => true);
 
     container = ProviderContainer(
       overrides: [

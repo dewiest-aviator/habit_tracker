@@ -307,6 +307,36 @@ class AppLocalizationsEn extends AppLocalizations {
       'Receive a helpful nudge to complete today’s habits.';
 
   @override
+  String get settingsNotificationPermissionTitle => 'Notification permission';
+
+  @override
+  String get settingsNotificationPermissionStatusGranted => 'Granted';
+
+  @override
+  String get settingsNotificationPermissionStatusDenied => 'Denied';
+
+  @override
+  String get settingsNotificationPermissionStatusAsk => 'Requires permission';
+
+  @override
+  String get settingsNotificationPermissionStatusUnknown =>
+      'Status unavailable';
+
+  @override
+  String get settingsNotificationPermissionActionRequest => 'Request';
+
+  @override
+  String get settingsNotificationPermissionActionSettings => 'Open settings';
+
+  @override
+  String get settingsNotificationPermissionGrantedMessage =>
+      'Notifications are enabled.';
+
+  @override
+  String get settingsNotificationPermissionDeniedMessage =>
+      'Notifications remain disabled. Update system settings to allow alerts.';
+
+  @override
   String get settingsNotificationTimeTitle => 'Reminder time';
 
   @override
@@ -338,6 +368,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsThemeDescriptionDark => 'Always use a dark theme';
+
+  @override
+  String get settingsTimeFormatLabel => 'Time format';
+
+  @override
+  String get settingsTimeFormatOptionSystem => 'Match device';
+
+  @override
+  String get settingsTimeFormatOption12h => '12-hour';
+
+  @override
+  String get settingsTimeFormatOption24h => '24-hour';
+
+  @override
+  String get settingsTimeFormatDescriptionSystem =>
+      'Use the time format from your device settings.';
+
+  @override
+  String get settingsTimeFormatDescription12h =>
+      'Display times with AM/PM markers.';
+
+  @override
+  String get settingsTimeFormatDescription24h =>
+      'Display times using 00:00–23:59.';
 
   @override
   String get settingsLanguageSection => 'Language';
@@ -373,6 +427,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get htmlThemeOptionDark => 'Dark';
 
   @override
+  String get settingsSupportSection => 'Support';
+
+  @override
+  String get settingsRateApp => 'Rate Habit Tracker';
+
+  @override
+  String get settingsRateAppSubtitle =>
+      'Share feedback and help others discover the app';
+
+  @override
+  String get settingsRateAppSuccess => 'Thanks for rating Habit Tracker!';
+
+  @override
+  String get settingsRateAppFailure =>
+      'We couldn’t open the review flow right now.';
+
+  @override
+  String get settingsReportIssue => 'Report an issue';
+
+  @override
+  String get settingsReportIssueSubtitle =>
+      'Send a support email with diagnostics attached';
+
+  @override
+  String get settingsReportIssueSuccess =>
+      'Drafting an email with support details.';
+
+  @override
+  String get settingsReportIssueFailure =>
+      'We couldn’t open your email app. Please try again later.';
+
+  @override
   String get settingsAboutSection => 'About';
 
   @override
@@ -386,6 +472,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivacyPolicySubtitle => 'How we handle your data';
+
+  @override
+  String get settingsLicenses => 'Open-source licenses';
+
+  @override
+  String get settingsLicensesSubtitle => 'View licenses for included packages';
 
   @override
   String settingsVersionLabel(String version, String build) {

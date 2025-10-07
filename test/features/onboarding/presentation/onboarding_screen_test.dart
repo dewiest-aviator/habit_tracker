@@ -101,6 +101,15 @@ void main() {
     telemetryController = TelemetryController(enableFirebase: false);
 
     when(() => habitsRepository.saveHabit(any())).thenAnswer((_) async {});
+    when(
+      () => notificationService.getPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.notDetermined);
+    when(
+      () => notificationService.requestAndGetPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.granted);
+    when(
+      () => notificationService.openSystemNotificationSettings(),
+    ).thenAnswer((_) async => true);
   });
 
   testWidgets('completes onboarding when notifications are granted', (

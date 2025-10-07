@@ -6,6 +6,18 @@ class AppConfig {
     'CONTENT_BASE_URL',
     defaultValue: 'https://dewiest-aviator.github.io/habit_tracker',
   );
+  static const appStoreUrl = String.fromEnvironment(
+    'APP_STORE_URL',
+    defaultValue: 'https://apps.apple.com/app/id0000000000',
+  );
+  static const playStoreUrl = String.fromEnvironment(
+    'PLAY_STORE_URL',
+    defaultValue: 'https://play.google.com/store/apps/details?id=com.example.habit',
+  );
+  static const supportEmail = String.fromEnvironment(
+    'SUPPORT_EMAIL',
+    defaultValue: 'support@habittracker.app',
+  );
 
   static AppEnv get environment {
     switch (flavor) {

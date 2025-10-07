@@ -3,12 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/core/services/analytics_service.dart';
 import 'package:habit_tracker/core/services/consent_service.dart';
+import 'package:habit_tracker/core/services/notification_service.dart';
+import 'package:habit_tracker/core/services/support_service.dart';
 import 'package:habit_tracker/core/telemetry/controllers/telemetry_controller.dart';
 import 'package:habit_tracker/core/telemetry/providers/telemetry_provider.dart';
 import 'package:habit_tracker/features/info/application/providers/app_info_provider.dart';
+import 'package:habit_tracker/features/settings/application/controllers/time_preferences_controller.dart';
 import 'package:habit_tracker/features/settings/application/providers/language_provider.dart';
 import 'package:habit_tracker/features/settings/application/providers/notification_settings_provider.dart';
 import 'package:habit_tracker/features/settings/application/providers/theme_provider.dart';
+import 'package:habit_tracker/features/settings/application/providers/time_preferences_provider.dart';
 import 'package:habit_tracker/features/settings/presentation/screens/settings_screen.dart';
 import 'package:habit_tracker/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
@@ -21,10 +25,16 @@ class _MockAnalytics extends Mock implements FirebaseAnalytics {}
 
 class _MockCrashlytics extends Mock implements FirebaseCrashlytics {}
 
+class _MockNotificationService extends Mock implements NotificationService {}
+
+class _MockSupportService extends Mock implements SupportService {}
+
 void main() {
   late _MockAnalytics analytics;
   late _MockCrashlytics crashlytics;
   late PackageInfo packageInfo;
+  late _MockNotificationService notificationService;
+  late _MockSupportService supportService;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
@@ -33,11 +43,19 @@ void main() {
 
     analytics = _MockAnalytics();
     crashlytics = _MockCrashlytics();
-    when(() => analytics.setAnalyticsCollectionEnabled(any()))
-        .thenAnswer((_) async {});
+    when(
+      () => analytics.setAnalyticsCollectionEnabled(any()),
+    ).thenAnswer((_) async {});
     when(() => analytics.logAppOpen()).thenAnswer((_) async {});
-    when(() => crashlytics.setCrashlyticsCollectionEnabled(any()))
-        .thenAnswer((_) async {});
+    when(
+      () => analytics.logEvent(
+        name: any(named: 'name'),
+        parameters: any(named: 'parameters'),
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => crashlytics.setCrashlyticsCollectionEnabled(any()),
+    ).thenAnswer((_) async {});
 
     packageInfo = PackageInfo(
       appName: 'Habit Tracker',
@@ -46,6 +64,35 @@ void main() {
       buildNumber: '42',
       buildSignature: 'sig',
       installerStore: null,
+    );
+
+    notificationService = _MockNotificationService();
+    when(
+      () => notificationService.getPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.granted);
+    when(
+      () => notificationService.requestAndGetPermissionStatus(),
+    ).thenAnswer((_) async => NotificationAuthorizationStatus.granted);
+    when(
+      () => notificationService.openSystemNotificationSettings(),
+    ).thenAnswer((_) async => true);
+
+    supportService = _MockSupportService();
+    when(() => supportService.rateApp()).thenAnswer(
+      (_) async => const RateAppOutcome(
+        success: true,
+        usedInAppReview: true,
+        openedStoreListing: false,
+      ),
+    );
+    when(
+      () => supportService.reportIssue(packageInfo: any(named: 'packageInfo')),
+    ).thenAnswer(
+      (_) async => const ReportIssueOutcome(
+        success: true,
+        logReady: true,
+        logSizeBytes: 256,
+      ),
     );
   });
 
@@ -61,6 +108,8 @@ void main() {
         ),
         telemetryControllerProvider.overrideWith(TelemetryController.new),
         appInfoProvider.overrideWith((ref) async => packageInfo),
+        notificationServiceProvider.overrideWithValue(notificationService),
+        supportServiceProvider.overrideWithValue(supportService),
       ],
       child: child,
     );
@@ -107,10 +156,7 @@ void main() {
       container.read(telemetryControllerProvider).analyticsConsent,
       isFalse,
     );
-    expect(
-      container.read(telemetryControllerProvider).crashConsent,
-      isFalse,
-    );
+    expect(container.read(telemetryControllerProvider).crashConsent, isFalse);
 
     final analyticsSwitch = find.byKey(const Key('switch_analytics_consent'));
     final crashSwitch = find.byKey(const Key('switch_crash_consent'));
@@ -123,17 +169,11 @@ void main() {
       container.read(telemetryControllerProvider).analyticsConsent,
       isTrue,
     );
-    expect(
-      container.read(telemetryControllerProvider).crashConsent,
-      isFalse,
-    );
+    expect(container.read(telemetryControllerProvider).crashConsent, isFalse);
 
     await tester.tap(crashSwitch);
     await tester.pumpAndSettle();
-    expect(
-      container.read(telemetryControllerProvider).crashConsent,
-      isTrue,
-    );
+    expect(container.read(telemetryControllerProvider).crashConsent, isTrue);
     expect(
       container.read(telemetryControllerProvider).isConsentGranted,
       isTrue,
@@ -170,6 +210,11 @@ void main() {
     await waitForCondition(
       () => container.read(notificationSettingsProvider).hasLoaded,
     );
+    await waitForCondition(
+      () =>
+          container.read(notificationSettingsProvider).permissionStatus !=
+          NotificationAuthorizationStatus.unknown,
+    );
 
     final notificationsSwitch = find.byKey(
       const Key('switch_notifications_enabled'),
@@ -188,6 +233,33 @@ void main() {
     expect(listTile.enabled, isTrue);
   });
 
+  testWidgets('changing time format updates controller', (
+    WidgetTester tester,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+
+    final container = await pumpSettings(tester);
+    await waitForCondition(
+      () => container.read(timePreferencesProvider).hasLoaded,
+    );
+    expect(
+      container.read(timePreferencesProvider).preference,
+      TimeFormatPreference.system,
+    );
+
+    final dropdownFinder = find.byKey(const Key('dropdown_time_format'));
+    final dropdownWidget = tester
+        .widget<DropdownButtonFormField<TimeFormatPreference>>(dropdownFinder);
+    dropdownWidget.onChanged?.call(TimeFormatPreference.h24);
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(timePreferencesProvider).preference,
+      TimeFormatPreference.h24,
+    );
+  });
+
   testWidgets('changing language updates controller', (
     WidgetTester tester,
   ) async {
@@ -204,6 +276,9 @@ void main() {
         .read(languageControllerProvider.notifier)
         .setLocale(const Locale('en'));
     await tester.pumpAndSettle();
-    expect(container.read(languageControllerProvider).locale?.languageCode, 'en');
+    expect(
+      container.read(languageControllerProvider).locale?.languageCode,
+      'en',
+    );
   });
 }
