@@ -96,6 +96,14 @@ flutter {
     source = "../.."
 }
 
+configurations.all {
+    exclude(group = "com.google.android.play", module = "review")
+    exclude(group = "com.google.android.play", module = "core-common")
+}
+
 dependencies {
+    implementation("com.google.android.play:core:1.10.3") {
+        exclude(group = "com.google.android.play", module = "core-common")
+    }
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
