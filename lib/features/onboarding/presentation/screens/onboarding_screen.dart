@@ -6,6 +6,7 @@ import '../../../../core/localization/l10n_extensions.dart';
 import '../../application/onboarding_controller.dart';
 import '../../application/onboarding_state.dart';
 import '../../application/starter_habit_template.dart';
+import '../../application/onboarding_analytics.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -114,6 +115,7 @@ class _WelcomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final analytics = ref.read(onboardingAnalyticsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -134,7 +136,10 @@ class _WelcomePage extends ConsumerWidget {
         ),
         const Spacer(),
         ElevatedButton(
-          onPressed: onGetStarted,
+          onPressed: () {
+            analytics.logGetStartedTap();
+            onGetStarted();
+          },
           child: Text(l10n.onboardingGetStarted),
         ),
         const SizedBox(height: 12),

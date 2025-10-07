@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:habit_tracker/features/habits/application/home_analytics.dart';
 import 'package:habit_tracker/features/habits/application/home_controller.dart';
+import 'package:habit_tracker/features/habits/application/home_state.dart';
 import 'package:habit_tracker/features/habits/data/repositories/habit_entries_repository.dart';
 import 'package:habit_tracker/features/habits/data/repositories/habits_repository.dart';
 import 'package:habit_tracker/features/habits/domain/domain.dart';
@@ -20,6 +22,38 @@ class _MockHabitEntriesRepository extends Mock
 
 class _MockToggleHabitCompletion extends Mock
     implements ToggleHabitCompletion {}
+
+class _StubHomeAnalytics extends HomeAnalytics {
+  const _StubHomeAnalytics();
+
+  @override
+  Future<void> logView({
+    required int totalHabits,
+    required int completedHabits,
+    required bool isEmpty,
+  }) async {}
+
+  @override
+  Future<void> logToggle(Habit habit, bool completed) async {}
+
+  @override
+  Future<void> logRefresh(HomeState state) async {}
+
+  @override
+  Future<void> logAddHabitTap() async {}
+
+  @override
+  Future<void> logAddHabitLimitReached(int totalHabits) async {}
+
+  @override
+  Future<void> logHabitActionsOpen(Habit habit) async {}
+
+  @override
+  Future<void> logHabitActionSelected(
+    Habit habit, {
+    required String action,
+  }) async {}
+}
 
 GoRouter _createRouter() {
   final rootKey = GlobalKey<NavigatorState>();
@@ -116,7 +150,10 @@ void main() {
   Future<void> pumpHome(WidgetTester tester, HomeController controller) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [homeControllerProvider.overrideWith(() => controller)],
+        overrides: [
+          homeControllerProvider.overrideWith(() => controller),
+          homeAnalyticsProvider.overrideWithValue(const _StubHomeAnalytics()),
+        ],
         child: MaterialApp.router(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

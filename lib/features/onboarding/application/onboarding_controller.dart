@@ -8,6 +8,7 @@ import '../../settings/application/providers/notification_settings_provider.dart
 import '../../../core/services/notification_service.dart';
 import '../../../core/telemetry/controllers/telemetry_controller.dart';
 import '../../../core/telemetry/providers/telemetry_provider.dart';
+import 'onboarding_analytics.dart';
 import 'onboarding_state.dart';
 import 'starter_habit_template.dart';
 
@@ -16,6 +17,7 @@ class OnboardingController extends Notifier<OnboardingState> {
   late final NotificationService _notificationService;
   late final NotificationSettingsController _notificationSettings;
   late final TelemetryController _telemetryController;
+  late final OnboardingAnalytics _analytics;
   late final SharedPreferences? _providedPrefs;
 
   static const hasOnboardedKey = 'has_onboarded';
@@ -32,7 +34,13 @@ class OnboardingController extends Notifier<OnboardingState> {
     _notificationService = ref.read(notificationServiceProvider);
     _notificationSettings = ref.read(notificationSettingsProvider.notifier);
     _telemetryController = ref.read(telemetryControllerProvider.notifier);
+    _analytics = ref.read(onboardingAnalyticsProvider);
     _providedPrefs = ref.read(onboardingPreferencesProvider);
+
+    Future<void>.microtask(() {
+      if (!ref.mounted) return;
+      _analytics.logPageView(0);
+    });
 
     return const OnboardingState();
   }
@@ -40,6 +48,7 @@ class OnboardingController extends Notifier<OnboardingState> {
   void setPageIndex(int index) {
     if (index == state.pageIndex) return;
     state = state.copyWith(pageIndex: index);
+    _analytics.logPageView(index);
   }
 
   Future<bool> skipOnboarding() async {
@@ -57,6 +66,8 @@ class OnboardingController extends Notifier<OnboardingState> {
       final prefs = await _prefsInstance();
       await prefs.setBool(hasOnboardedKey, true);
       state = state.copyWith(isSaving: false);
+      _analytics.logSkip();
+      _analytics.logComplete(selectedCount: state.selectedHabits.length);
       return true;
     } catch (error) {
       state = state.copyWith(isSaving: false, errorMessage: error.toString());
@@ -69,25 +80,30 @@ class OnboardingController extends Notifier<OnboardingState> {
     if (current.containsKey(template.id)) {
       current.remove(template.id);
       state = state.copyWith(selectedHabits: current);
+      _analytics.logHabitToggle(template, label, false);
       return;
     }
 
     if (current.length >= 3) {
+      _analytics.logHabitToggle(template, label, false);
       return;
     }
 
     current[template.id] = label;
     state = state.copyWith(selectedHabits: current);
+    _analytics.logHabitToggle(template, label, true);
   }
 
   void setAnalyticsConsent(bool value) {
     if (state.analyticsConsent == value) return;
     state = state.copyWith(analyticsConsent: value);
+    _analytics.logConsentUpdate(channel: 'analytics', granted: value);
   }
 
   void setCrashConsent(bool value) {
     if (state.crashConsent == value) return;
     state = state.copyWith(crashConsent: value);
+    _analytics.logConsentUpdate(channel: 'crash', granted: value);
   }
 
   Future<void> enableNotifications() async {
@@ -103,12 +119,14 @@ class OnboardingController extends Notifier<OnboardingState> {
             : NotificationPermissionStatus.denied,
         isRequestingPermission: false,
       );
+      _analytics.logNotificationsRequest(granted: granted);
     } catch (error) {
       state = state.copyWith(
         errorMessage: error.toString(),
         permissionStatus: NotificationPermissionStatus.denied,
         isRequestingPermission: false,
       );
+      _analytics.logNotificationsRequest(granted: false);
     }
   }
 
@@ -118,6 +136,7 @@ class OnboardingController extends Notifier<OnboardingState> {
       permissionStatus: NotificationPermissionStatus.denied,
       errorMessage: null,
     );
+    _analytics.logNotificationsDeclined();
   }
 
   Future<bool> completeOnboarding() async {
@@ -130,6 +149,7 @@ class OnboardingController extends Notifier<OnboardingState> {
       final prefs = await _prefsInstance();
       await prefs.setBool(hasOnboardedKey, true);
       state = state.copyWith(isSaving: false);
+      _analytics.logComplete(selectedCount: state.selectedHabits.length);
       return true;
     } catch (error) {
       state = state.copyWith(isSaving: false, errorMessage: error.toString());
@@ -166,8 +186,7 @@ class OnboardingController extends Notifier<OnboardingState> {
   }
 
   Future<void> _applyTelemetryConsent() async {
-    await _telemetryController
-        .updateAnalyticsConsent(state.analyticsConsent);
+    await _telemetryController.updateAnalyticsConsent(state.analyticsConsent);
     await _telemetryController.updateCrashConsent(state.crashConsent);
   }
 }
