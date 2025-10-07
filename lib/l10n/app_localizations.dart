@@ -236,6 +236,66 @@ abstract class AppLocalizations {
   /// **'Your streak history will appear here soon.'**
   String get historyPlaceholder;
 
+  /// No description provided for @historyEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No history yet'**
+  String get historyEmptyTitle;
+
+  /// No description provided for @historyEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your habits to build your timeline.'**
+  String get historyEmptyMessage;
+
+  /// No description provided for @historyEmptyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Start tracking today!'**
+  String get historyEmptyCta;
+
+  /// No description provided for @historyFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by habit'**
+  String get historyFilterLabel;
+
+  /// No description provided for @historyFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All habits'**
+  String get historyFilterAll;
+
+  /// No description provided for @historyStreakHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak summary'**
+  String get historyStreakHeading;
+
+  /// No description provided for @historyStreakBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best streak'**
+  String get historyStreakBest;
+
+  /// No description provided for @historyStreakCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current streak'**
+  String get historyStreakCurrent;
+
+  /// No description provided for @historyCompletionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed} of {total} complete'**
+  String historyCompletionLabel(int completed, int total);
+
+  /// No description provided for @historyNoHabitsForDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled habits for this day.'**
+  String get historyNoHabitsForDay;
+
   /// No description provided for @habitFormCreateTitle.
   ///
   /// In en, this message translates to:

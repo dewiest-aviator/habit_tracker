@@ -16,6 +16,7 @@ class HabitRecord {
     required this.bestStreak,
     required this.currentStreak,
     this.lastChecked,
+    required this.createdAt,
   }) : days = List<int>.unmodifiable(List<int>.from(days));
 
   final String id;
@@ -28,6 +29,7 @@ class HabitRecord {
   final int bestStreak;
   final int currentStreak;
   final DateTime? lastChecked;
+  final DateTime createdAt;
 
   Habit toHabit() {
     return Habit(
@@ -40,6 +42,7 @@ class HabitRecord {
       reminderTime: reminderTime,
       bestStreak: bestStreak,
       currentStreak: currentStreak,
+      createdAt: createdAt,
       lastChecked: lastChecked,
     );
   }
@@ -56,6 +59,7 @@ class HabitRecord {
       bestStreak: habit.bestStreak,
       currentStreak: habit.currentStreak,
       lastChecked: habit.lastChecked,
+      createdAt: habit.createdAt,
     );
   }
 
@@ -72,7 +76,8 @@ class HabitRecord {
         other.reminderTime == reminderTime &&
         other.bestStreak == bestStreak &&
         other.currentStreak == currentStreak &&
-        other.lastChecked == lastChecked;
+        other.lastChecked == lastChecked &&
+        other.createdAt == createdAt;
   }
 
   @override
@@ -87,11 +92,12 @@ class HabitRecord {
     bestStreak,
     currentStreak,
     lastChecked,
+    createdAt,
   );
 
   @override
   String toString() {
-    return 'HabitRecord(id: $id, name: $name, streak: $currentStreak/$bestStreak)';
+    return 'HabitRecord(id: $id, name: $name, streak: $currentStreak/$bestStreak, createdAt: $createdAt)';
   }
 }
 
@@ -117,13 +123,15 @@ class HabitRecordAdapter extends TypeAdapter<HabitRecord> {
       bestStreak: fields[7] as int,
       currentStreak: fields[8] as int,
       lastChecked: fields[9] as DateTime?,
+      createdAt:
+          (fields[10] as DateTime?) ?? DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
   @override
   void write(BinaryWriter writer, HabitRecord obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -143,6 +151,8 @@ class HabitRecordAdapter extends TypeAdapter<HabitRecord> {
       ..writeByte(8)
       ..write(obj.currentStreak)
       ..writeByte(9)
-      ..write(obj.lastChecked);
+      ..write(obj.lastChecked)
+      ..writeByte(10)
+      ..write(obj.createdAt);
   }
 }

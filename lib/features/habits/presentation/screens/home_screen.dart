@@ -41,17 +41,24 @@ class HomeScreen extends ConsumerWidget {
           onShowActions: (habit) => _showHabitActions(context, ref, habit),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: state.canAddHabit
-            ? () async {
+      floatingActionButton: state.isEmpty
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                if (!state.canAddHabit) {
+                  final message = l10n.habitFormLimitError;
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(message)));
+                  return;
+                }
                 final result = await context.pushNamed('habit_form');
                 if (!context.mounted) return;
                 _handleFormResult(context, result);
-              }
-            : null,
-        tooltip: l10n.homeAddHabitTooltip,
-        child: const Icon(Icons.add),
-      ),
+              },
+              tooltip: l10n.homeAddHabitTooltip,
+              child: const Icon(Icons.add),
+            ),
     );
   }
 
@@ -155,13 +162,23 @@ class _HomeBody extends StatelessWidget {
     }
 
     if (state.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const SizedBox(height: 48),
-          HomeEmptyState(onAdd: () => context.pushNamed('habit_form')),
-          const SizedBox(height: 48),
-        ],
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  child: HomeEmptyState(
+                    onAdd: () => context.pushNamed('habit_form'),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       );
     }
 

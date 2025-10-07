@@ -76,6 +76,26 @@
   "navSettingsLabel": "Settings",
   "historyTitle": "History",
   "historyPlaceholder": "Your streak history will appear here soon.",
+  "historyEmptyTitle": "No history yet",
+  "historyEmptyMessage": "Complete your habits to build your timeline.",
+  "historyEmptyCta": "Start tracking today!",
+  "historyFilterLabel": "Filter by habit",
+  "historyFilterAll": "All habits",
+  "historyStreakHeading": "Streak summary",
+  "historyStreakBest": "Best streak",
+  "historyStreakCurrent": "Current streak",
+  "historyCompletionLabel": "{completed} of {total} complete",
+  "@historyCompletionLabel": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "historyNoHabitsForDay": "No scheduled habits for this day.",
   "habitFormCreateTitle": "Create habit",
   "habitFormEditTitle": "Edit habit",
   "habitFormCreatePlaceholder": "The habit form will live here in a future update.",

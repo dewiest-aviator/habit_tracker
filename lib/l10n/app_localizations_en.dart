@@ -93,6 +93,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyPlaceholder => 'Your streak history will appear here soon.';
 
   @override
+  String get historyEmptyTitle => 'No history yet';
+
+  @override
+  String get historyEmptyMessage =>
+      'Complete your habits to build your timeline.';
+
+  @override
+  String get historyEmptyCta => 'Start tracking today!';
+
+  @override
+  String get historyFilterLabel => 'Filter by habit';
+
+  @override
+  String get historyFilterAll => 'All habits';
+
+  @override
+  String get historyStreakHeading => 'Streak summary';
+
+  @override
+  String get historyStreakBest => 'Best streak';
+
+  @override
+  String get historyStreakCurrent => 'Current streak';
+
+  @override
+  String historyCompletionLabel(int completed, int total) {
+    return '$completed of $total complete';
+  }
+
+  @override
+  String get historyNoHabitsForDay => 'No scheduled habits for this day.';
+
+  @override
   String get habitFormCreateTitle => 'Create habit';
 
   @override

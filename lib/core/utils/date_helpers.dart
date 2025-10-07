@@ -26,6 +26,36 @@ class DateHelpers {
         first.day == second.day;
   }
 
+  /// Returns `true` when [date] falls between [start] and [end] (inclusive).
+  static bool isWithinRange(DateTime date, DateTime start, DateTime end) {
+    final normalized = startOfDay(date);
+    final normalizedStart = startOfDay(start);
+    final normalizedEnd = startOfDay(end);
+    if (normalizedStart.isAfter(normalizedEnd)) {
+      throw ArgumentError('start must be on or before end');
+    }
+    return !normalized.isBefore(normalizedStart) &&
+        !normalized.isAfter(normalizedEnd);
+  }
+
+  /// Generates an ordered list of days between [start] and [end] (inclusive).
+  static List<DateTime> daysInRange(DateTime start, DateTime end) {
+    var normalizedStart = startOfDay(start);
+    var normalizedEnd = startOfDay(end);
+    if (normalizedStart.isAfter(normalizedEnd)) {
+      final temp = normalizedStart;
+      normalizedStart = normalizedEnd;
+      normalizedEnd = temp;
+    }
+    final days = <DateTime>[];
+    var cursor = normalizedStart;
+    while (!cursor.isAfter(normalizedEnd)) {
+      days.add(cursor);
+      cursor = cursor.add(const Duration(days: 1));
+    }
+    return List<DateTime>.unmodifiable(days);
+  }
+
   /// Maps the provided [date] to the app's weekday index where Monday = 0 and
   /// Sunday = 6.
   static int weekdayIndex(DateTime date) {

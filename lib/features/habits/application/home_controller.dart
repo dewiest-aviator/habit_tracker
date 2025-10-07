@@ -16,11 +16,11 @@ class HomeController extends Notifier<HomeState> {
     ToggleHabitCompletion? toggleHabitCompletion,
     DateTime Function()? clock,
     Timer Function(Duration, void Function())? timerFactory,
-  })  : _habitsRepositoryOverride = habitsRepository,
-        _habitEntriesRepositoryOverride = habitEntriesRepository,
-        _toggleHabitCompletionOverride = toggleHabitCompletion,
-        _clockOverride = clock,
-        _timerFactoryOverride = timerFactory;
+  }) : _habitsRepositoryOverride = habitsRepository,
+       _habitEntriesRepositoryOverride = habitEntriesRepository,
+       _toggleHabitCompletionOverride = toggleHabitCompletion,
+       _clockOverride = clock,
+       _timerFactoryOverride = timerFactory;
 
   final HabitsRepository? _habitsRepositoryOverride;
   final HabitEntriesRepository? _habitEntriesRepositoryOverride;
@@ -45,12 +45,15 @@ class HomeController extends Notifier<HomeState> {
   HomeState build() {
     _habitsRepository =
         _habitsRepositoryOverride ?? ref.read(habitsRepositoryProvider);
-    _habitEntriesRepository = _habitEntriesRepositoryOverride ??
+    _habitEntriesRepository =
+        _habitEntriesRepositoryOverride ??
         ref.read(habitEntriesRepositoryProvider);
     _toggleHabitCompletion =
-        _toggleHabitCompletionOverride ?? ref.read(toggleHabitCompletionProvider);
+        _toggleHabitCompletionOverride ??
+        ref.read(toggleHabitCompletionProvider);
     _clock = _clockOverride ?? ref.read(homeControllerClockProvider);
-    _timerFactory = _timerFactoryOverride ?? ref.read(homeControllerTimerProvider);
+    _timerFactory =
+        _timerFactoryOverride ?? ref.read(homeControllerTimerProvider);
 
     _currentDay = DateHelpers.startOfDay(_clock());
     _latestHabits = const <Habit>[];
@@ -209,7 +212,6 @@ class HomeController extends Notifier<HomeState> {
     unawaited(_loadCurrentDay());
     _scheduleMidnightRefresh();
   }
-
 }
 
 final homeControllerClockProvider = Provider<DateTime Function()>((ref) {

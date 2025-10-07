@@ -52,14 +52,18 @@ void main() {
       currentStreak: 0,
     );
 
-    when(() => habitsRepository.getTodayHabits(any()))
-        .thenAnswer((_) async => [habit]);
-    when(() => habitsRepository.watchTodayHabits(any()))
-        .thenAnswer((_) => habitsStream.stream);
-    when(() => habitEntriesRepository.fetchEntriesForDate(any()))
-        .thenAnswer((_) async => <HabitEntry>[]);
-    when(() => habitEntriesRepository.watchEntriesForDate(any()))
-        .thenAnswer((_) => entriesStream.stream);
+    when(
+      () => habitsRepository.getTodayHabits(any()),
+    ).thenAnswer((_) async => [habit]);
+    when(
+      () => habitsRepository.watchTodayHabits(any()),
+    ).thenAnswer((_) => habitsStream.stream);
+    when(
+      () => habitEntriesRepository.fetchEntriesForDate(any()),
+    ).thenAnswer((_) async => <HabitEntry>[]);
+    when(
+      () => habitEntriesRepository.watchEntriesForDate(any()),
+    ).thenAnswer((_) => entriesStream.stream);
 
     container = ProviderContainer(
       overrides: [
@@ -76,7 +80,10 @@ void main() {
         ),
       ],
     );
-    subscription = container.listen(homeControllerProvider, (previous, next) {});
+    subscription = container.listen(
+      homeControllerProvider,
+      (previous, next) {},
+    );
   });
 
   tearDown(() async {
@@ -86,7 +93,8 @@ void main() {
     container.dispose();
   });
 
-  HomeController controller() => container.read(homeControllerProvider.notifier);
+  HomeController controller() =>
+      container.read(homeControllerProvider.notifier);
 
   Future<void> pumpMicrotasks() => Future<void>.delayed(Duration.zero);
 
@@ -113,7 +121,6 @@ void main() {
     expect(state.isLoading, isFalse);
     expect(state.habits, isNotEmpty);
     expect(state.habits.first.habit, habit);
-
   });
 
   test('toggleHabit updates completion state and streaks', () async {
@@ -131,23 +138,22 @@ void main() {
       done: true,
     );
 
-    when(() => toggleHabitCompletion.call(
-          habitId: habit.id,
-          date: any(named: 'date'),
-        )).thenAnswer(
+    when(
+      () => toggleHabitCompletion.call(
+        habitId: habit.id,
+        date: any(named: 'date'),
+      ),
+    ).thenAnswer(
       (_) async => ToggleHabitResult(habit: updatedHabit, entry: entry),
     );
 
     final result = await ctrl.toggleHabit(habit.id);
     expect(result, isTrue);
 
-    final state = await waitForState(
-      (value) => value.habits.first.isCompleted,
-    );
+    final state = await waitForState((value) => value.habits.first.isCompleted);
     expect(state.completedCount, 1);
     expect(state.habits.first.habit.currentStreak, 1);
     expect(state.habits.first.isCompleted, isTrue);
-
   });
 
   test('toggleHabit restores previous state when failing', () async {
@@ -158,19 +164,18 @@ void main() {
 
     await waitForState((value) => !value.isLoading);
 
-    when(() => toggleHabitCompletion.call(
-          habitId: habit.id,
-          date: any(named: 'date'),
-        )).thenThrow(Exception('failure'));
+    when(
+      () => toggleHabitCompletion.call(
+        habitId: habit.id,
+        date: any(named: 'date'),
+      ),
+    ).thenThrow(Exception('failure'));
 
     final result = await ctrl.toggleHabit(habit.id);
 
     expect(result, isNull);
-    final state = await waitForState(
-      (value) => value.errorMessage != null,
-    );
+    final state = await waitForState((value) => value.errorMessage != null);
     expect(state.habits.first.isCompleted, isFalse);
     expect(state.errorMessage, contains('failure'));
-
   });
 }
