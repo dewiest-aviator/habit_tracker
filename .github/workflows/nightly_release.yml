@@ -138,7 +138,7 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --reporter expanded
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with: { name: coverage-lcov-nightly, path: coverage/lcov.info }
       - name: Upload coverage to Codecov (nightly)
         uses: codecov/codecov-action@v5
@@ -289,7 +289,7 @@ jobs:
           echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
       - name: Upload Android APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.APK_OUT }}
           path: ${{ env.APK_OUT }}
