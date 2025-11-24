@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Read Flutter version from FVM
         id: fvm
         uses: actions/github-script@v8
@@ -155,7 +155,7 @@ jobs:
     environment: ${{ needs.set-env.outputs.env_name }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Read Flutter version from FVM
         id: fvm
         uses: actions/github-script@v8
