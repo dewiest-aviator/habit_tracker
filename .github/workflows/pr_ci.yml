@@ -23,7 +23,7 @@ jobs:
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Paths filter
         id: filter
         uses: dorny/paths-filter@v3
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Codecov empty-upload (no reports needed)
         uses: codecov/codecov-action@v5
         with:
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
@@ -133,7 +133,7 @@ jobs:
     environment: dev
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
@@ -316,7 +316,7 @@ jobs:
     environment: dev
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
