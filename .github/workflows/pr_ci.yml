@@ -112,7 +112,7 @@ jobs:
         run: flutter test --coverage --reporter expanded
 
       - name: Upload lcov.info
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-lcov
           path: coverage/lcov.info
@@ -263,7 +263,7 @@ jobs:
           echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.APK_OUT }}
           path: ${{ env.APK_OUT }}
@@ -412,7 +412,7 @@ jobs:
           echo "APP_OUT=$OUT_NAME" >> $GITHUB_ENV
 
       - name: Upload iOS simulator app artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.APP_OUT }}
           path: ${{ env.APP_OUT }}
