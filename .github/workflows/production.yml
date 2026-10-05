@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with: { name: coverage-lcov-nightly, path: coverage/lcov.info }
       - name: Upload coverage to Codecov (nightly)
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info

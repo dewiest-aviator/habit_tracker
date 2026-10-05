@@ -52,7 +52,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
       - name: Codecov empty-upload (no reports needed)
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           run_command: empty-upload
@@ -118,7 +118,7 @@ jobs:
           path: coverage/lcov.info
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
