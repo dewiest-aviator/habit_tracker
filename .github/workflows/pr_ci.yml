@@ -68,7 +68,7 @@ jobs:
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -137,7 +137,7 @@ jobs:
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -270,7 +270,7 @@ jobs:
 
       - name: Derive Firebase appId from google-services.json
         id: appid
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           ANDROID_GOOGLE_SERVICES_PATH: ${{ vars.ANDROID_GOOGLE_SERVICES_PATH }}
         with:
@@ -320,7 +320,7 @@ jobs:
 
       - name: Read Flutter version (.fvmrc)
         id: fvm
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

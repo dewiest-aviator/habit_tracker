@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v5
       - name: Read Flutter version from FVM
         id: fvm
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@v5
       - name: Read Flutter version from FVM
         id: fvm
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
